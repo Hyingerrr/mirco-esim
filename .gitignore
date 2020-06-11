@@ -1,2 +1,4 @@
 .idea
 esim
+/tool/protoc/helloworld/helloworld.proto
+/test/
