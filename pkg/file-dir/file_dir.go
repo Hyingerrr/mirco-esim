@@ -113,8 +113,6 @@ func GetGoProPath() string {
 	if strings.Contains(wd+string(filepath.Separator), srcPath) {
 		parDir = strings.Replace(wd+string(filepath.Separator), srcPath, "", -1)
 		parDir = strings.Trim(parDir, string(filepath.Separator))
-	} else {
-		parDir = filepath.Base(wd)
 	}
 
 	return parDir
