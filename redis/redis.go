@@ -102,7 +102,7 @@ func NewClient(options ...Option) *Client {
 			onceClient.redisHost = "0.0.0.0"
 		}
 
-		onceClient.redisPort = onceClient.conf.GetString("redis_post")
+		onceClient.redisPort = onceClient.conf.GetString("redis_port")
 		if onceClient.redisPort == "" {
 			onceClient.redisPort = "6379"
 		}

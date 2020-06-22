@@ -56,7 +56,9 @@ func NewLogger(options ...Option) Logger {
 		ErrorOutputPaths: []string{"stderr"},
 		DisableCaller:    true,
 	}
-	zapConfig.EncoderConfig.EncodeTime = logger.standardTimeEncoder
+	zapConfig.EncoderConfig.EncodeTime = func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
+		enc.AppendString(t.Format("2006-01-02 15:04:05.999999"))
+	}
 
 	if !logger.json {
 		zapConfig.Encoding = "console"

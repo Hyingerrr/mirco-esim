@@ -55,7 +55,7 @@ redis_max_active : 50
 redis_max_idle : 100
 redis_idle_time_out : 600
 redis_host : 0.0.0.0
-redis_post : 6379
+redis_port : 6379
 redis_password :
 
 #redis 读超时 单位：ms
