@@ -184,12 +184,18 @@ func (pj *Project) delDir() bool {
 	return true
 }
 
+/*创建项目时 在gomodule 模式下，
+项目生成的路径取自录入的ServerName
+因当前工作路径不在项目父目录中。
+*/
 func (pj *Project) getProPath() {
-	currentDir := filedir.GetGoProPath()
+	pj.ProPath = ""
+	return
+	/*currentDir := filedir.GetGoProPath()
 	if currentDir != "" {
 		currentDir += string(filepath.Separator)
 	}
-	pj.ProPath = currentDir
+	pj.ProPath = currentDir*/
 }
 
 // getPackName in most cases,  ServerName eq PackageName
