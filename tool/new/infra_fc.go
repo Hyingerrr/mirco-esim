@@ -67,10 +67,9 @@ func (infraer *Infra) Close()  {
 
 func (infraer *Infra) HealthCheck() []error {
 	var errs []error
-	var err error
 
 	dbErrs := infraer.DB.Ping()
-	if err != nil{
+	if dbErrs != nil{
 		errs = append(errs, dbErrs...)
 	}
 

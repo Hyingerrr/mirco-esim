@@ -109,3 +109,6 @@ func NewEsim() *Esim {
 	return onceEsim
 }
 
+func (e *Esim) String() string {
+	return "Esim 基础框架;"
+}

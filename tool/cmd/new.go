@@ -29,7 +29,7 @@ func init() {
 
 	newCmd.Flags().BoolP("grpc", "", false, "init grpc server")
 
-	newCmd.Flags().BoolP("monitoring", "m", true, "enable monitoring")
+	newCmd.Flags().BoolP("monitoring", "m", false, "enable monitoring")
 
 	newCmd.Flags().StringP("server_name", "s", "", "server name")
 
