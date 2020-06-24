@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	_ "github.com/go-sql-driver/mysql"
+
 	"github.com/jinzhu/gorm"
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
@@ -45,7 +47,7 @@ type ClientOptions struct{}
 
 type DbConfig struct {
 	Db          string `json:"db" yaml:"db"`
-	Dsn         string `json:"dns" yaml:"dsn"`
+	Dsn         string `json:"dsn" yaml:"dsn"`
 	MaxIdle     int    `json:"max_idle" yaml:"maxidle"`
 	MaxOpen     int    `json:"max_open" yaml:"maxopen"`
 	MaxLifetime int    `json:"max_lifetime" yaml:"maxlifetime"`

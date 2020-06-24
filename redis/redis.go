@@ -1,8 +1,8 @@
 package redis
 
 import (
-	"log"
-	"os"
+	 "log"
+	 "os"
 	"sync"
 	"time"
 

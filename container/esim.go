@@ -70,7 +70,7 @@ var loggerFunc = func(conf config.Config) log.Logger {
 
 	logger := log.NewLogger(
 		loggerOptions.WithDebug(conf.GetBool("debug")),
-		loggerOptions.WithJSON(conf.GetString("runmode") == "pro"),
+		//loggerOptions.WithJSON(conf.GetString("runmode") == "pro"),
 	)
 	return logger
 }
@@ -109,6 +109,3 @@ func NewEsim() *Esim {
 	return onceEsim
 }
 
-func (e *Esim) String() string {
-	return "相信，相信自己！！！"
-}
