@@ -51,10 +51,11 @@ func NewApp(options ...Option) *App {
 		conf := config.NewViperConfig(options.WithConfigType("yaml"),
 			options.WithConfFile(file))
 
+		/*此处暂且注释
 		env := os.Getenv("ENV")
 		if env == "" {
 			conf.Set("runmode", "dev")
-		}
+		}*/
 
 		if conf.GetString("runmode") != "pro" {
 			conf.Set("debug", true)
