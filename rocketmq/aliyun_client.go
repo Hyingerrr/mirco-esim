@@ -16,7 +16,7 @@ type MQClient struct {
 
 	accessKey string // AccessKey 阿里云身份验证，在阿里云服务器管理控制台创建
 
-	secretKey string // SecretKey 阿里云身份验证，在阿里云服务器管理控制台创建
+	secretKey string // SecretKey
 
 	endpoint string // 设置HTTP接入域名
 

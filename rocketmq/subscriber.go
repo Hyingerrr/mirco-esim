@@ -207,7 +207,7 @@ func (se *SubscribeEngine) handleConsumeMsg(subInfo *Subscriber, msg *ConsumeMes
 	c.reset()
 	c.consumeMsg = msg
 	c.consumeAck = ack
-	c.subscribe = subInfo
+	c.subscriber = subInfo
 	c.handlers = subInfo.handlersChain
 
 	//调用链
@@ -237,13 +237,15 @@ func (se *SubscribeEngine) Start() {
 				case resp := <-respChan:
 					// 处理业务逻辑
 					var handles []string
-					se.logger.Debugf("Consume %d messages---->", len(resp.Messages))
+					se.logger.Debugf("Consume [%d] messages---->", len(resp.Messages))
 
 					for _, v := range resp.Messages {
-						se.logger.Debugf("MessageID: %s, PublishTime: %d, MessageTag: %s "+
-							" ConsumedTimes: %d, FirstConsumeTime: %d, NextConsumeTime: %d Body: %s",
+						se.logger.Infof("MessageID: [%s], PublishTime: [%d], MessageTag: [%s] "+
+							" ConsumedTimes: [%d], FirstConsumeTime: [%d], NextConsumeTime: [%d]",
 							v.MessageId, v.PublishTime, v.MessageTag, v.ConsumedTimes,
 							v.FirstConsumeTime, v.NextConsumeTime, v.MessageBody)
+						se.logger.Debugf("MessageID: [%s], PublishTime: [%d], MessageTag: [%s] MessageBody [%s]",
+							v.MessageId, v.PublishTime, v.MessageTag, v.MessageBody)
 
 						consumerMsg := &ConsumeMessage{v}
 						consumerAck := &ConsumeMessageAck{}

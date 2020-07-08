@@ -16,7 +16,7 @@ type Context struct {
 	consumeMsg *ConsumeMessage
 	consumeAck *ConsumeMessageAck
 	ack        bool
-	subscribe  *Subscribe
+	subscriber *Subscriber
 	handlers   HandlersChain
 	index      int8
 	topic      string
@@ -40,7 +40,7 @@ type Context struct {
 func (c *Context) reset() {
 	c.consumeMsg = nil
 	c.consumeAck = nil
-	c.subscribe = nil
+	c.subscriber = nil
 
 	c.handlers = nil
 	c.index = -1
