@@ -286,7 +286,7 @@ func (se *SubscribeEngine) Start() {
 					se.logger.Infof("Ack ---->[%s]确认成功;", handles)
 				case err := <-errChan:
 					if strings.Contains(err.(errors.ErrCode).Error(), "MessageNotExist") {
-						se.logger.Infof("ConsumeMessage No new message, continue")
+						se.logger.Debugf("ConsumeMessage No new message, continue")
 						endChan <- struct{}{}
 						return
 					}
@@ -317,7 +317,7 @@ func (se *SubscribeEngine) Start() {
 		se.logger.Infof("begin subscribe [%+v]", si)
 		for i := 0; i < si.concurrency; i++ {
 			go func(id int, s *Subscriber) {
-				se.logger.Infof("[%d]订阅信息[%+v]", id, si)
+				se.logger.Infof("[%d]订阅信息[%+v]", id+1, si)
 				consumer := se.client.Consumer(si.topicName, si.groupID, si.messageTag)
 				consumerFunc(consumer, s)
 			}(i, si)
