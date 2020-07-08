@@ -108,9 +108,9 @@ func (c *Context) Next() {
 	}
 }
 
-func (c *Context) Ack(receiptHandle string) {
+func (c *Context) Ack() {
 	c.ack = true
-	c.consumeAck.ReceiptHandle = receiptHandle
+	c.consumeAck.ReceiptHandle = c.consumeMsg.Messages.ReceiptHandle
 }
 
 func (c *Context) IsAck() bool {
@@ -178,6 +178,12 @@ func (c *Context) Set(key string, value interface{}) {
 
 	c.Keys[key] = value
 	c.mu.Unlock()
+}
+
+// Get returns the value for the given key, ie: (value, true).
+// If the value does not exists it returns (nil, false)
+func (c *Context) ConsumeMessage() *ConsumeMessage {
+	return c.consumeMsg
 }
 
 // Get returns the value for the given key, ie: (value, true).

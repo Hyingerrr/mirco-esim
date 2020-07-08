@@ -116,13 +116,13 @@ func (se *SubscribeEngine) allocateContext() *Context {
 	return &Context{engine: se}
 }
 
-func (se SubscribeEngine) Use(middleware ...HandlerFunc) {
+func (se *SubscribeEngine) Use(middleware ...HandlerFunc) {
 	se.handlers = append(se.handlers, middleware...)
 }
 
 type SubscribeOption func(*Subscriber)
 
-func (se SubscribeEngine) Subscriber(options ...SubscribeOption) error {
+func (se *SubscribeEngine) Subscriber(options ...SubscribeOption) error {
 	sub := new(Subscriber)
 	for _, opt := range options {
 		opt(sub)
@@ -148,8 +148,12 @@ func (se SubscribeEngine) Subscriber(options ...SubscribeOption) error {
 	if sub.concurrency == 0 {
 		sub.concurrency = 1
 	}
+	//处理链
+	sub.handlersChain = se.combineHandlers(sub.handlersChain)
 
 	se.list = append(se.list, sub)
+
+	se.logger.Infof("Subscriber[%+v] regitster success!", sub)
 	return nil
 }
 
@@ -186,6 +190,12 @@ func WithSubscribeMaxWait(maxWait int) SubscribeOption {
 func WithSubscribeConcurrency(curr int) SubscribeOption {
 	return func(subscribe *Subscriber) {
 		subscribe.concurrency = curr
+	}
+}
+
+func WithSubscribeHandlersChain(handlers ...HandlerFunc) SubscribeOption {
+	return func(subscribe *Subscriber) {
+		subscribe.handlersChain = handlers
 	}
 }
 
@@ -227,6 +237,7 @@ func (se *SubscribeEngine) handleConsumeMsg(subInfo *Subscriber, msg *ConsumeMes
 }
 
 func (se *SubscribeEngine) Start() {
+
 	var consumerFunc = func(consumer mq_http_sdk.MQConsumer, sub *Subscriber) {
 		for {
 			endChan := make(chan struct{})
@@ -243,7 +254,7 @@ func (se *SubscribeEngine) Start() {
 						se.logger.Infof("MessageID: [%s], PublishTime: [%d], MessageTag: [%s] "+
 							" ConsumedTimes: [%d], FirstConsumeTime: [%d], NextConsumeTime: [%d]",
 							v.MessageId, v.PublishTime, v.MessageTag, v.ConsumedTimes,
-							v.FirstConsumeTime, v.NextConsumeTime, v.MessageBody)
+							v.FirstConsumeTime, v.NextConsumeTime)
 						se.logger.Debugf("MessageID: [%s], PublishTime: [%d], MessageTag: [%s] MessageBody [%s]",
 							v.MessageId, v.PublishTime, v.MessageTag, v.MessageBody)
 
@@ -277,6 +288,7 @@ func (se *SubscribeEngine) Start() {
 					if strings.Contains(err.(errors.ErrCode).Error(), "MessageNotExist") {
 						se.logger.Infof("ConsumeMessage No new message, continue")
 						endChan <- struct{}{}
+						return
 					}
 					se.logger.Infof("ConsumeMessage 读取消息失败[%s]", err)
 					se.logger.Infof("休眠3秒钟后继续....")
@@ -295,14 +307,22 @@ func (se *SubscribeEngine) Start() {
 			<-endChan
 		}
 	}
+
+	if len(se.list) == 0 {
+		se.logger.Panicf("没有订阅任何信息!!!")
+	}
+
 	//订阅配置对应队列
 	for _, si := range se.list {
+		se.logger.Infof("begin subscribe [%+v]", si)
 		for i := 0; i < si.concurrency; i++ {
-			go func(s *Subscriber) {
+			go func(id int, s *Subscriber) {
+				se.logger.Infof("[%d]订阅信息[%+v]", id, si)
 				consumer := se.client.Consumer(si.topicName, si.groupID, si.messageTag)
 				consumerFunc(consumer, s)
-			}(si)
+			}(i, si)
 		}
 	}
+	se.logger.Infof("SubscribeEngine init success!")
 
 }
