@@ -17,6 +17,10 @@ func provideMockProme(conf config.Config) *prometheus.Prometheus {
 	return prometheus.NewNullProme()
 }
 
+func provideMockAppName(conf config.Config) string {
+	return "mocktest"
+}
+
 func provideNoopTracer() opentracing.Tracer {
 	return opentracing.NoopTracer{}
 }
@@ -27,4 +31,5 @@ var MockSet = wire.NewSet(
 	provideLogger,
 	provideMockProme,
 	provideNoopTracer,
+	provideMockAppName,
 )

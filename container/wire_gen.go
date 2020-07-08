@@ -12,11 +12,13 @@ func initEsim() *Esim {
 	logger := provideLogger(config)
 	prometheus := providePrometheus(config, logger)
 	tracer := provideTracer(config, logger)
+	string2 := provideAppName(config)
 	esim := &Esim{
 		prometheus: prometheus,
 		Logger:     logger,
 		Conf:       config,
 		Tracer:     tracer,
+		AppName:    string2,
 	}
 	return esim
 }
@@ -26,11 +28,13 @@ func NewMockEsim() *Esim {
 	prometheus := provideMockProme(config)
 	logger := provideLogger(config)
 	tracer := provideNoopTracer()
+	string2 := provideMockAppName(config)
 	esim := &Esim{
 		prometheus: prometheus,
 		Logger:     logger,
 		Conf:       config,
 		Tracer:     tracer,
+		AppName:    string2,
 	}
 	return esim
 }

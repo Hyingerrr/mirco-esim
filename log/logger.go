@@ -62,7 +62,7 @@ func NewLogger(options ...Option) Logger {
 
 	if !logger.json {
 		zapConfig.Encoding = "console"
-		zapConfig.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+		zapConfig.EncoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
 	} else {
 		zapConfig.Encoding = "json"
 	}

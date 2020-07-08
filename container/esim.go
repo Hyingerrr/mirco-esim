@@ -26,6 +26,8 @@ type Esim struct {
 	Conf config.Config
 
 	Tracer opentracing.Tracer
+
+	AppName string
 }
 
 //nolint:varcheck,unused,deadcode
@@ -35,6 +37,7 @@ var esimSet = wire.NewSet(
 	provideLogger,
 	providePrometheus,
 	provideTracer,
+	provideAppName,
 )
 
 var confFunc = func() config.Config {
@@ -54,6 +57,7 @@ var prometheusFunc = func(conf config.Config, logger log.Logger) *prometheus.Pro
 		httpAddr = conf.GetString("prometheus_http_addr")
 	} else {
 		httpAddr = defaultPrometheusHTTPArrd
+		return nil
 	}
 	return prometheus.NewPrometheus(httpAddr, logger)
 }
@@ -89,6 +93,8 @@ var tracerFunc = func(conf config.Config, logger log.Logger) opentracing.Tracer 
 	} else {
 		appname = defaultAppname
 	}
+
+	logger.Infof("appname[%s]", appname)
 	return eot.NewTracer(appname, logger)
 }
 
@@ -97,6 +103,10 @@ func SetTracer(tracer func(config.Config, log.Logger) opentracing.Tracer) {
 }
 func provideTracer(conf config.Config, logger log.Logger) opentracing.Tracer {
 	return tracerFunc(conf, logger)
+}
+
+func provideAppName(conf config.Config) string {
+	return conf.GetString("appname")
 }
 
 // Esim init end.
