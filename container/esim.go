@@ -57,8 +57,10 @@ var prometheusFunc = func(conf config.Config, logger log.Logger) *prometheus.Pro
 		httpAddr = conf.GetString("prometheus_http_addr")
 	} else {
 		httpAddr = defaultPrometheusHTTPArrd
-		return nil
 	}
+	//TODO
+	return nil //暂时不需要该功能
+
 	return prometheus.NewPrometheus(httpAddr, logger)
 }
 
