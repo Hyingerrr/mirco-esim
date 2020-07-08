@@ -52,9 +52,9 @@ func NewMQClient(options ...Option) *MQClient {
 			onceClient.logger.Panicf("aliyun_access_key is null! please confirm")
 		}
 
-		onceClient.secretKey = onceClient.conf.GetString("aliyun_access_key")
+		onceClient.secretKey = onceClient.conf.GetString("aliyun_secrect_key")
 		if onceClient.secretKey == "" {
-			onceClient.logger.Panicf("aliyun_access_key is null! please confirm")
+			onceClient.logger.Panicf("aliyun_secrect_key is null! please confirm")
 		}
 
 		onceClient.instanceId = onceClient.conf.GetString("aliyun_instance_id")

@@ -16,11 +16,11 @@ type Publisher struct {
 	conf config.Config
 }
 
-type PublisherOption func(Publisher)
+type PublisherOption func(*Publisher)
 
-func NewPublisher(options ...PublisherOption) Publisher {
+func NewPublisher(options ...PublisherOption) *Publisher {
 
-	p := Publisher{}
+	p := &Publisher{}
 
 	for _, option := range options {
 		option(p)
@@ -43,13 +43,13 @@ func NewPublisher(options ...PublisherOption) Publisher {
 }
 
 func WithPublisherConf(conf config.Config) PublisherOption {
-	return func(p Publisher) {
+	return func(p *Publisher) {
 		p.conf = conf
 	}
 }
 
 func WithPublisherLogger(logger log.Logger) PublisherOption {
-	return func(p Publisher) {
+	return func(p *Publisher) {
 		p.logger = logger
 	}
 }
@@ -95,4 +95,5 @@ func (p *Publisher) publish(topicName string, msg mq_http_sdk.PublishMessageRequ
 		return err
 	}
 	p.logger.Infof("Publish成功 ---->MessageId:[%s], BodyMD5:[%s];", resp.MessageId, resp.MessageBodyMD5)
+	return nil
 }
