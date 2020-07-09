@@ -1,101 +1,82 @@
 package log
 
 import (
-	"context"
-	"os"
-	"reflect"
+	"fmt"
+	"github.com/jukylin/esim/config"
+	"github.com/stretchr/testify/assert"
 	"testing"
-
-	tracerid "github.com/jukylin/esim/pkg/tracer-id"
-	"github.com/opentracing/opentracing-go"
-	"github.com/uber/jaeger-client-go"
-	jaegerConfig "github.com/uber/jaeger-client-go/config"
+	"time"
 )
 
-var tracer opentracing.Tracer
-
-func TestMain(m *testing.M) {
-	setUp()
-
-	code := m.Run()
-
-	tearDown()
-
-	os.Exit(code)
+type Test struct {
+	A string
+	B int
+	C map[string]string
 }
 
-func setUp() {
-	cfg, _ := jaegerConfig.FromEnv()
-	cfg.ServiceName = "logger"
-	tracer, _, _ = cfg.NewTracer()
-}
+func TestNewLogger(t *testing.T) {
+	var (
+		it = assert.New(t)
+		l Logger
+	)
 
-func tearDown() {
+	it.NotPanics(func() {
+		memConfig := config.NewMemConfig()
+		memConfig.Set("debug", true)
+		opt := LoggerOptions{}
+		l = NewLogger(opt.WithLoggerConf(memConfig))
+	})
 
-}
+	// with map[string]interface{} and msg
+	l.WithFields(Field{"x":123, "y":345, "z": "hkhkh"}).Info("WithFields")
 
-func TestLog(t *testing.T) {
-	loggerOptions := LoggerOptions{}
-	logger := NewLogger(loggerOptions.WithDebug(false))
-
-	sp := tracer.StartSpan("test")
-	ctx := opentracing.ContextWithSpan(context.Background(), sp)
-
-	logger.Debugf("debug")
-
-	logger.Debugc(ctx, "debug")
-
-	logger.Infof("info")
-
-	logger.Infoc(ctx, "info")
-
-	logger.Warnf("warn")
-
-	logger.Warnc(ctx, "warn")
-}
-
-func Test_logger_getArgs(t *testing.T) {
-	type args struct {
-		ctx context.Context
+	// with msg
+	tx := Test{
+		A: "aaa",
+		B: 123,
+		C: map[string]string{"D": "888", "E": "999"},
 	}
+	l.Info("Info ...")
 
-	log := new(logger)
-	sp := tracer.StartSpan("test")
-	jaegerCtx := opentracing.ContextWithSpan(context.Background(), sp)
+	// with msg and variable
+	l.Infof("infof: %+v", tx)
 
-	esimTracerID := tracerid.TracerID()()
-	esimCtx := context.WithValue(context.Background(), tracerid.ActiveEsimKey, esimTracerID)
+	// with msg and []interface{}
+	l.InfoW("infoW", []interface{}{"baz", false, "xxx", tx}...)
 
-	tests := []struct {
-		name string
-		args args
-		want []interface{}
-	}{
-		{"jaeger_tracer_id", args{jaegerCtx},
-			[]interface{}{
-				"caller", "testing/testing.go:991", "tracer_id",
-				sp.Context().(jaeger.SpanContext).TraceID().String(),
-			}},
-		{"esim_tracer_id", args{esimCtx},
-			[]interface{}{
-				"caller", "testing/testing.go:991", "tracer_id", esimTracerID,
-			}},
-		{"empty_tracer_id", args{context.Background()},
-			[]interface{}{
-				"caller", "testing/testing.go:991",
-			}},
-		{"nil_ctx", args{context.Background()},
-			[]interface{}{
-				"caller", "testing/testing.go:991",
-			}},
-	}
+	//l.Errorfo("msgsss", zap.Int("a", 111), zap.String("b", "hhhhh"))
+	l.Errorf("msg: %+v", 423545)
 
-	for k := range tests {
-		test := tests[k]
-		t.Run(test.name, func(t *testing.T) {
-			if got := log.getArgs(test.args.ctx); !reflect.DeepEqual(got, test.want) {
-				t.Errorf("logger.getArgs() = %v, want %v", got, test.want)
+	//l.Debugf("print debug log ...")
+
+	//l.Errorf("print error log ..., time[%v]", 333)
+	//
+	//l.Info("print logs ...", zap.Reflect("aaaa", map[string]interface{}{
+	//			"aaa":1,
+	//			"bbb":2,
+	//			"nnn":"789",
+	//		}))
+
+	// test 切割
+	goto End
+	{
+		timer := time.NewTicker(time.Millisecond*10)
+		timer2 := time.NewTicker(3600 * time.Second)
+
+		for {
+			select {
+			case <-timer.C:
+				l.Infof("test logger: %v", 666)
+				l.Errorf("test logger errorf: %v", "logFilePath")
+				l.Debugf("test logger debug: %v", time.Now())
+			case <-timer2.C:
+				l.Infof("Stop !!!")
+				goto End
 			}
-		})
+		}
 	}
+
+
+End:
+	fmt.Println("task over")
 }
