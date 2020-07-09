@@ -26,7 +26,8 @@ const (
 )
 
 func TestMain(m *testing.M) {
-	logger = log.NewLogger()
+	loggerOptions := log.LoggerOptions{}
+	logger = log.NewLogger(loggerOptions.WithDebug(true))
 
 	code := m.Run()
 

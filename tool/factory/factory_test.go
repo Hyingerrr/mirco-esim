@@ -24,7 +24,8 @@ func TestMain(m *testing.M) {
 var esimfactory *EsimFactory
 
 func setUp() {
-	logger := log.NewLogger()
+	loggerOptions := log.LoggerOptions{}
+	logger := log.NewLogger(loggerOptions.WithDebug(true))
 	esimfactory = NewEsimFactory(
 		WithEsimFactoryLogger(logger),
 		WithEsimFactoryWriter(filedir.NewEsimWriter()),
@@ -101,7 +102,8 @@ type test struct {
 
 //nolint:goconst
 func TestExtendFieldAndReplaceStructContent(t *testing.T) {
-	logger := log.NewLogger()
+	loggerOptions := log.LoggerOptions{}
+	logger := log.NewLogger(loggerOptions.WithDebug(true))
 	esimfactory = NewEsimFactory(
 		WithEsimFactoryLogger(logger),
 		WithEsimFactoryWriter(filedir.NewEsimWriter()),

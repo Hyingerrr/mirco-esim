@@ -176,7 +176,7 @@ func EsimBackUpFile(backFile string) error {
 		return err
 	}
 
-	log.Client.Infof("%s backup to %s", relativePath, backUpPath)
+	log.Log.Infof("%s backup to %s", relativePath, backUpPath)
 
 	return nil
 }
@@ -225,7 +225,7 @@ func EsimRecoverFile(recoverFile string) error {
 		return err
 	}
 
-	log.Client.Infof("%s recover success", recoverFile)
+	log.Log.Infof("%s recover success", recoverFile)
 
 	return nil
 }

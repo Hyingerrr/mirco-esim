@@ -70,7 +70,13 @@ func providePrometheus(conf config.Config, logger log.Logger) *prometheus.Promet
 }
 
 var loggerFunc = func(conf config.Config) log.Logger {
-	return log.NewLogger()
+	var loggerOptions log.LoggerOptions
+
+	logger := log.NewLogger(
+		loggerOptions.WithDebug(conf.GetBool("debug")),
+		//loggerOptions.WithJSON(conf.GetString("runmode") == "pro"),
+	)
+	return logger
 }
 
 func SetLogger(logger func(config.Config) log.Logger) {

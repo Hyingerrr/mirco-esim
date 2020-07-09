@@ -37,7 +37,7 @@ func NewCmdExec(options ...CmdExecOption) Exec {
 	}
 
 	if e.logger == nil {
-		e.logger = log.NewLogger()
+		e.logger = log.NewNullLogger()
 	}
 
 	return e
