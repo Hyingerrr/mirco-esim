@@ -286,7 +286,7 @@ func (se *SubscribeEngine) Start() {
 					se.logger.Infof("Ack ---->[%s]确认成功;", handles)
 				case err := <-errChan:
 					if strings.Contains(err.(errors.ErrCode).Error(), "MessageNotExist") {
-						//se.logger.Debugf("ConsumeMessage No new message, continue")
+						se.logger.Debugf("ConsumeMessage No new message, continue")
 						endChan <- struct{}{}
 						return
 					}
