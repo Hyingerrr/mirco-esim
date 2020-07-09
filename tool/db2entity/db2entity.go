@@ -81,7 +81,7 @@ func NewDb2Entity(options ...Db2EnOption) *Db2Entity {
 	}
 
 	if d.logger == nil {
-		d.logger = log.NewNullLogger()
+		d.logger = log.NewLogger()
 	}
 
 	d.domainContent = make(map[string]string)
