@@ -32,7 +32,7 @@ func TestEntityDomainFile(t *testing.T) {
 	assert.Nil(t, err)
 
 	dbConf := NewDbConfig()
-	dbConf.ParseConfig(v, log.NewNullLogger())
+	dbConf.ParseConfig(v, log.NewLogger())
 
 	shareInfo := NewShareInfo()
 	shareInfo.CamelStruct = testStructName

@@ -1,6 +1,13 @@
 package log
 
-import "context"
+import (
+	"context"
+	"go.uber.org/zap"
+)
+
+var (
+	Client Logger
+)
 
 type Logger interface {
 	Error(msg string)
@@ -9,9 +16,17 @@ type Logger interface {
 
 	Infof(string, ...interface{})
 
+	Info( ...interface{})
+
+	InfoW(string, ...interface{})
+
 	Warnf(string, ...interface{})
 
+	WarnW(string, ...interface{})
+
 	Errorf(string, ...interface{})
+
+	//Errorfo(string, ...zapcore.Field)
 
 	DPanicf(string, ...interface{})
 
@@ -32,4 +47,6 @@ type Logger interface {
 	Panicc(context.Context, string, ...interface{})
 
 	Fatalc(context.Context, string, ...interface{})
+
+	WithFields(Field) *zap.SugaredLogger
 }
