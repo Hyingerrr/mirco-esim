@@ -2,6 +2,7 @@ package http
 
 import (
 	"context"
+	"crypto/tls"
 	"io"
 	"net/http"
 	"net/url"
@@ -73,6 +74,12 @@ func (ClientOptions) WithLogger(logger log.Logger) Option {
 	}
 }
 
+func (ClientOptions) WithInsecureSkip() Option {
+	return func(hc *Client) {
+		hc.client.Transport = &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
+	}
+}
+
 func (c *Client) Do(ctx context.Context, req *http.Request) (*http.Response, error) {
 	resp, err := c.client.Do(req)
 	return resp, err
@@ -113,6 +120,15 @@ func (c *Client) Head(ctx context.Context, addr string) (resp *http.Response, er
 	}
 	req = req.WithContext(ctx)
 	return c.Do(ctx, req)
+}
+
+func (c *Client) Request(ctx context.Context, method string, addr string) (r *http.Request, err error) {
+	req, err := http.NewRequest(method, addr, nil)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	return req, nil
 }
 
 func (c *Client) CloseIdleConnections(ctx context.Context) {
