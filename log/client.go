@@ -2,6 +2,10 @@ package log
 
 import (
 	"context"
+	"os"
+	"runtime"
+	"time"
+
 	"github.com/jukylin/esim/config"
 	tracerid "github.com/jukylin/esim/pkg/tracer-id"
 	"github.com/opentracing/opentracing-go"
@@ -9,17 +13,14 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
-	"os"
-	"runtime"
-	"time"
 )
 
 type logger struct {
 	*Config
-	log *zap.Logger
+	log   *zap.Logger
 	debug bool
 	sugar *zap.SugaredLogger
-	conf config.Config
+	conf  config.Config
 }
 
 type Field map[string]interface{}
@@ -30,9 +31,10 @@ type Option func(*logger)
 
 func NewLogger(options ...Option) Logger {
 	var (
-		w    zapcore.WriteSyncer
-		l = &logger{Config:&Config{}}
-		opts = make([]zap.Option, 0)
+		writer []zapcore.WriteSyncer
+		l      = &logger{Config: &Config{}}
+		opts   = make([]zap.Option, 0)
+		core   []zapcore.Core
 	)
 
 	for _, opt := range options {
@@ -40,22 +42,27 @@ func NewLogger(options ...Option) Logger {
 	}
 
 	if l.conf == nil {
-		l.conf = config.NewMemConfig()
+		l.conf = config.GetConfigClient()
+		//l.conf = config.NewMemConfig()
 	}
 
 	l.Config.fillWithDefaultConfig(l.conf)
 
-	if l.Config.OutFile {
-		hook := &lumberjack.Logger{
-			Filename:   l.Config.File,
-			MaxSize:    l.Config.MaxSize,
-			MaxBackups: l.Config.BackupCount,
-			MaxAge:     l.Config.MaxAge,
-			Compress:   false,
-		}
-		w = zapcore.AddSync(hook)
-	} else {
-		w = zapcore.AddSync(os.Stdout)
+	hook := &lumberjack.Logger{
+		Filename:   l.Config.File,
+		MaxSize:    l.Config.MaxSize,
+		MaxBackups: l.Config.BackupCount,
+		MaxAge:     l.Config.MaxAge,
+		Compress:   false,
+	}
+
+	switch {
+	case l.Config.IsBothFileStdout():
+		writer = append(writer, zapcore.AddSync(hook), zapcore.AddSync(os.Stdout))
+	case l.Config.IsOutFile():
+		writer = append(writer, zapcore.AddSync(hook))
+	case l.Config.IsOutStdout():
+		writer = append(writer, zapcore.AddSync(os.Stdout))
 	}
 
 	lever := ParseLevel(l.Config.Level)
@@ -68,8 +75,11 @@ func NewLogger(options ...Option) Logger {
 		opts = append(opts, zap.AddStacktrace(lever))
 	}
 
-	core := zapcore.NewCore(l.buildEncoder(), w, zap.NewAtomicLevelAt(lever))
-	l.log = zap.New(core, opts...)
+	for _, w := range writer {
+		core = append(core, zapcore.NewCore(l.buildEncoder(), w, zap.NewAtomicLevelAt(lever)))
+	}
+
+	l.log = zap.New(zapcore.NewTee(core...), opts...)
 	l.sugar = l.log.Sugar()
 	Log = l
 	return Log
@@ -209,7 +219,7 @@ func (l *logger) getArgs(ctx context.Context, field ...Field) []interface{} {
 
 	args = append(args, "caller", l.getCaller(runtime.Caller(2)))
 
-	if len(field) > 0{
+	if len(field) > 0 {
 		for k, v := range field[0] {
 			args = append(args, k, v)
 		}

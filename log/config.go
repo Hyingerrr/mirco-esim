@@ -1,14 +1,15 @@
 package log
 
 import (
+	"strings"
+
 	"github.com/jukylin/esim/config"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"strings"
 )
 
 type Config struct {
-	OutFile      bool   `yaml:"log_out_file"` // 日志的位置  是否在文件，true 文件 false stdout
+	Output       string `yaml:"log_output"` // 日志的位置 file|both|stdout
 	Level        string `yaml:"log_level"`
 	Format       string `yaml:"log_format"`
 	ReportCaller bool   `yaml:"log_report_caller"`
@@ -20,8 +21,8 @@ type Config struct {
 	Compress     bool   `yaml:"log_compress"`     // 是否压缩/归档旧文件
 }
 
-func (c *Config) fillWithDefaultConfig(conf config.Config)  {
-	c.OutFile = conf.GetBool("log_out_file")
+func (c *Config) fillWithDefaultConfig(conf config.Config) {
+	c.Output = conf.GetString("log_output")
 	c.File = conf.GetString("log_file")
 	if c.File == "" {
 		c.File = "./logs/esim.log"
@@ -43,14 +44,26 @@ func (c *Config) fillWithDefaultConfig(conf config.Config)  {
 	}
 	c.MaxSize = conf.GetInt("log_max_size")
 	if c.MaxSize == 0 {
-		c.MaxSize = 1000  // 10G
+		c.MaxSize = 1000 // 10G
 	}
 	c.Stacktrace = conf.GetBool("log_stack_trace")
 	c.ReportCaller = conf.GetBool("log_report_caller")
 	c.Format = conf.GetString("log_format")
 	if c.Format == "" {
-		c.Format = "json"
+		c.Format = "console"
 	}
+}
+
+func (c *Config) IsOutStdout() bool {
+	return c.Output == "stdout"
+}
+
+func (c *Config) IsBothFileStdout() bool {
+	return c.Output == "both"
+}
+
+func (c *Config) IsOutFile() bool {
+	return c.Output == "file"
 }
 
 func ParseLevel(lvl string) zapcore.Level {
