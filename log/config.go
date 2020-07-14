@@ -23,6 +23,10 @@ type Config struct {
 
 func (c *Config) fillWithDefaultConfig(conf config.Config) {
 	c.Output = conf.GetString("log_output")
+	if c.Output == "" {
+		c.Output = "stdout"
+	}
+
 	c.File = conf.GetString("log_file")
 	if c.File == "" {
 		c.File = "./logs/esim.log"
@@ -50,7 +54,7 @@ func (c *Config) fillWithDefaultConfig(conf config.Config) {
 	c.ReportCaller = conf.GetBool("log_report_caller")
 	c.Format = conf.GetString("log_format")
 	if c.Format == "" {
-		c.Format = "console"
+		c.Format = "text"
 	}
 }
 

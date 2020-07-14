@@ -43,7 +43,9 @@ func NewLogger(options ...Option) Logger {
 
 	if l.conf == nil {
 		l.conf = config.GetConfigClient()
-		//l.conf = config.NewMemConfig()
+		if l.conf == nil {
+			l.conf = config.NewMemConfig()
+		}
 	}
 
 	l.Config.fillWithDefaultConfig(l.conf)
