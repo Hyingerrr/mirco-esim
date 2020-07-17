@@ -255,8 +255,8 @@ func (se *SubscribeEngine) Start() {
 							" ConsumedTimes: [%d], FirstConsumeTime: [%d], NextConsumeTime: [%d]",
 							v.MessageId, v.PublishTime, v.MessageTag, v.ConsumedTimes,
 							v.FirstConsumeTime, v.NextConsumeTime)
-						se.logger.Debugf("MessageID: [%s], PublishTime: [%d], MessageTag: [%s] MessageBody [%s]",
-							v.MessageId, v.PublishTime, v.MessageTag, v.MessageBody)
+						se.logger.Debugf("MessageID: [%s], PublishTime: [%d], MessageTag: [%s], MessageBody[%s], MessageKey[%v]",
+							v.MessageId, v.PublishTime, v.MessageTag, v.MessageBody, v.MessageKey)
 
 						consumerMsg := &ConsumeMessage{v}
 						consumerAck := &ConsumeMessageAck{}
@@ -317,8 +317,8 @@ func (se *SubscribeEngine) Start() {
 		se.logger.Infof("begin subscribe [%+v]", si)
 		for i := 0; i < si.concurrency; i++ {
 			go func(id int, s *Subscriber) {
-				se.logger.Infof("[%d]订阅信息[%+v]", id+1, si)
-				consumer := se.client.Consumer(si.topicName, si.groupID, si.messageTag)
+				se.logger.Infof("[%d]订阅信息[%+v]", id+1, s)
+				consumer := se.client.Consumer(s.topicName, s.groupID, s.messageTag)
 				consumerFunc(consumer, s)
 			}(i, si)
 		}
