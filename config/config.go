@@ -10,6 +10,8 @@ import (
 	"github.com/spf13/viper"
 )
 
+var GlbConfig *viperConf
+
 type viperConf struct {
 	*viper.Viper
 
@@ -21,6 +23,10 @@ type viperConf struct {
 type ViperConfOptions struct{}
 
 type Option func(c *viperConf)
+
+func GetConfigClient() *viperConf {
+	return GlbConfig
+}
 
 func NewViperConfig(options ...Option) Config {
 	viperConf := &viperConf{}
@@ -62,7 +68,7 @@ func NewViperConfig(options ...Option) Config {
 		}
 	}
 	viperConf.Viper = v
-
+	GlbConfig = viperConf
 	return viperConf
 }
 
