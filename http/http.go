@@ -1,136 +1,134 @@
 package http
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
 
+	"github.com/go-resty/resty/v2"
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/proxy"
 )
 
 type Client struct {
-	client *http.Client
+	logger log.Logger
 
 	transports []func() interface{}
 
-	logger log.Logger
+	Client *resty.Client // go-resty用法灵活，大写公开，不必局限于该文件下的SendPOST、SendGET等方法；
 }
 
-type Option func(c *Client)
+type Options func(*Client)
 
 type ClientOptions struct{}
 
-func NewClient(options ...Option) *Client {
-	Client := &Client{
-		transports: make([]func() interface{}, 0),
+func NewClient(opts ...Options) *Client {
+	c := &Client{Client: resty.New()}
+
+	for _, opt := range opts {
+		opt(c)
 	}
 
-	client := &http.Client{}
-	Client.client = client
-
-	for _, option := range options {
-		option(Client)
+	if c.logger == nil {
+		c.logger = log.NewLogger()
 	}
 
-	if Client.transports == nil {
-		Client.client.Transport = http.DefaultTransport
+	if c.transports == nil {
+		c.Client.SetTransport(http.DefaultTransport)
 	} else {
-		Client.client.Transport = proxy.NewProxyFactory().
-			GetFirstInstance("http", http.DefaultTransport,
-				Client.transports...).(http.RoundTripper)
+		transport := proxy.NewProxyFactory().
+			GetFirstInstance("http", http.DefaultTransport, c.transports...).(http.RoundTripper)
+		c.Client.SetTransport(transport)
 	}
 
-	if Client.client.Timeout <= 0 {
-		Client.client.Timeout = 30 * time.Second
+	if c.Client.GetClient().Timeout <= 0 {
+		c.Client.SetTimeout(30 * time.Second)
 	}
 
-	if Client.logger == nil {
-		Client.logger = log.NewLogger()
-	}
-
-	return Client
+	return c
 }
 
-func (ClientOptions) WithProxy(proxys ...func() interface{}) Option {
+func (ClientOptions) WithProxy(proxys ...func() interface{}) Options {
 	return func(hc *Client) {
 		hc.transports = append(hc.transports, proxys...)
 	}
 }
 
-func (ClientOptions) WithTimeOut(timeout time.Duration) Option {
+func (ClientOptions) WithTimeOut(timeout time.Duration) Options {
 	return func(hc *Client) {
-		hc.client.Timeout = timeout * time.Second
+		hc.Client.SetTimeout(timeout * time.Second)
 	}
 }
 
-func (ClientOptions) WithLogger(logger log.Logger) Option {
+func (ClientOptions) WithLogger(logger log.Logger) Options {
 	return func(hc *Client) {
 		hc.logger = logger
 	}
 }
 
-func (ClientOptions) WithInsecureSkip() Option {
+// with TLS/SSL
+func (ClientOptions) WithInsecureSkip() Options {
 	return func(hc *Client) {
-		hc.client.Transport = &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
+		hc.Client.SetTransport(&http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}})
 	}
 }
 
-func (c *Client) Do(ctx context.Context, req *http.Request) (*http.Response, error) {
-	resp, err := c.client.Do(req)
-	return resp, err
+func (c *Client) SendGet(ctx context.Context, addr string) (rtyResp *resty.Response, err error) {
+	return c.Client.R().SetContext(ctx).EnableTrace().Get(strings.TrimSpace(addr))
 }
 
+func (c *Client) SendPost(ctx context.Context, addr, contentType string, body io.Reader) (rtyResp *resty.Response, err error) {
+	return c.Client.R().SetContext(ctx).EnableTrace().
+		SetHeader("Content-Type", contentType).
+		SetBody(body).
+		Post(strings.TrimSpace(addr))
+}
+
+// 兼容老的Get方法
 func (c *Client) Get(ctx context.Context, addr string) (resp *http.Response, err error) {
-	req, err := http.NewRequest("GET", addr, nil)
+	var (
+		rtyResp *resty.Response
+	)
+
+	rtyResp, err = c.Client.R().SetContext(ctx).EnableTrace().Get(strings.TrimSpace(addr))
 	if err != nil {
 		return nil, err
 	}
 
-	req = req.WithContext(ctx)
-	resp, err = c.client.Do(req)
-	return resp, err
+	rtyResp.RawResponse.Body = ioutil.NopCloser(bytes.NewReader(rtyResp.Body()))
+	return rtyResp.RawResponse, err
 }
 
-func (c *Client) Post(ctx context.Context, addr, contentType string,
-	body io.Reader) (resp *http.Response, err error) {
-	req, err := http.NewRequest("POST", addr, body)
+// 兼容老的POST方法
+func (c *Client) Post(ctx context.Context, addr, contentType string, body io.Reader) (resp *http.Response, err error) {
+	var (
+		rtyResp *resty.Response
+	)
+
+	rtyResp, err = c.Client.R().SetContext(ctx).EnableTrace().
+		SetHeader("Content-Type", contentType).
+		SetBody(body).
+		Post(strings.TrimSpace(addr))
 	if err != nil {
 		return nil, err
 	}
-	req = req.WithContext(ctx)
-	req.Header.Set("Content-Type", contentType)
-	return c.Do(ctx, req)
+
+	rtyResp.RawResponse.Body = ioutil.NopCloser(bytes.NewReader(rtyResp.Body()))
+
+	return rtyResp.RawResponse, err
 }
 
-func (c *Client) PostForm(ctx context.Context, addr string,
-	data url.Values) (resp *http.Response, err error) {
-	return c.Post(ctx, addr, "application/x-www-form-urlencoded",
-		strings.NewReader(data.Encode()))
-}
-
-func (c *Client) Head(ctx context.Context, addr string) (resp *http.Response, err error) {
-	req, err := http.NewRequest("HEAD", addr, nil)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	return c.Do(ctx, req)
-}
-
-func (c *Client) Request(ctx context.Context, method string, addr string) (r *http.Request, err error) {
-	req, err := http.NewRequest(method, addr, nil)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	return req, nil
+// 兼容老PostForm方法
+func (c *Client) PostForm(ctx context.Context, addr string, data url.Values) (resp *http.Response, err error) {
+	return c.Post(ctx, addr, "application/x-www-form-urlencoded", strings.NewReader(data.Encode()))
 }
 
 func (c *Client) CloseIdleConnections(ctx context.Context) {
-	c.client.CloseIdleConnections()
+	c.Client.SetCloseConnection(true)
 }

@@ -20,14 +20,17 @@ import (
 var logger log.Logger
 
 const (
-	host1 = "127.0.0.1"
+	host1 = "http://192.168.3.154:8081/ping"
 
 	host2 = "127.0.0.2"
 )
 
 func TestMain(m *testing.M) {
 	loggerOptions := log.LoggerOptions{}
-	logger = log.NewLogger(loggerOptions.WithDebug(true))
+	options := config.ViperConfOptions{}
+	conf := config.NewViperConfig(options.WithConfigType("yaml"),
+		options.WithConfFile([]string{"/Users/hy/develop/esim/config/a.yaml"}))
+	logger = log.NewLogger(loggerOptions.WithDebug(true), loggerOptions.WithLoggerConf(conf))
 
 	code := m.Run()
 
@@ -135,15 +138,16 @@ func TestMonitorProxy(t *testing.T) {
 
 	ctx := context.Background()
 	resp, err := httpClient.Get(ctx, host1)
-	resp.Body.Close()
-
 	assert.Nil(t, err)
+	//resp.Body.Close()
+	buf, err := ioutil.ReadAll(resp.Body)
+	assert.Nil(t, err)
+	fmt.Println(string(buf))
 	assert.Equal(t, resp.StatusCode, http.StatusOK)
 
-	resp, err = httpClient.Get(ctx, host2)
-	resp.Body.Close()
-
+	rtyResp, err := httpClient.SendGet(ctx, host1)
 	assert.Nil(t, err)
+	fmt.Println(rtyResp.Body())
 	assert.Equal(t, resp.StatusCode, http.StatusMultipleChoices)
 
 	lab := prometheus.Labels{"url": host1, "method": http.MethodGet}
@@ -202,7 +206,7 @@ func TestTimeoutProxy(t *testing.T) {
 
 	ctx := context.Background()
 	resp, err := httpClient.Get(ctx, host1)
-	resp.Body.Close()
+	//resp.Body.Close()
 
 	assert.Nil(t, err)
 	assert.Equal(t, resp.StatusCode, http.StatusOK)
