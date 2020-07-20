@@ -54,21 +54,17 @@ func WithPublisherLogger(logger log.Logger) PublisherOption {
 	}
 }
 
-func (p *Publisher) PublishMessage(topicName, messageBody, messageTag, messageKey string) error {
+func (p *Publisher) PublishMessage(topicName, messageBody string) error {
 	msg := mq_http_sdk.PublishMessageRequest{
 		MessageBody: messageBody,
-		MessageTag:  messageTag,
-		MessageKey:  messageKey,
 	}
 	return p.publish(topicName, msg)
 }
 
-func (p *Publisher) PublishDelayMessage(topicName, messageBody, messageTag, messageKey string, delay time.Duration) error {
+func (p *Publisher) PublishDelayMessage(topicName, messageBody string, delay time.Duration) error {
 	msg := mq_http_sdk.PublishMessageRequest{
 		MessageBody:      messageBody,
 		StartDeliverTime: time.Now().Add(delay).UTC().Unix() * 1000, //值为毫秒级别的Unix时间戳
-		MessageKey:       messageKey,
-		MessageTag:       messageTag,
 	}
 	return p.publish(topicName, msg)
 }

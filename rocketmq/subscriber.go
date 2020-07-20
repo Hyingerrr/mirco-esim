@@ -251,11 +251,11 @@ func (se *SubscribeEngine) Start() {
 					se.logger.Debugf("Consume [%d] messages---->", len(resp.Messages))
 
 					for _, v := range resp.Messages {
-						se.logger.Infof("MessageID: [%s], PublishTime: [%d], MessageTag: [%s] "+
+						se.logger.Infof("Receive MessageID: [%s], PublishTime: [%d], MessageTag: [%s] "+
 							" ConsumedTimes: [%d], FirstConsumeTime: [%d], NextConsumeTime: [%d]",
 							v.MessageId, v.PublishTime, v.MessageTag, v.ConsumedTimes,
 							v.FirstConsumeTime, v.NextConsumeTime)
-						se.logger.Debugf("MessageID: [%s], PublishTime: [%d], MessageTag: [%s], MessageBody[%s], MessageKey[%v]",
+						se.logger.Debugf("Receive MessageID: [%s], PublishTime: [%d], MessageTag: [%s], MessageBody[%s], MessageKey[%v]",
 							v.MessageId, v.PublishTime, v.MessageTag, v.MessageBody, v.MessageKey)
 
 						consumerMsg := &ConsumeMessage{v}
