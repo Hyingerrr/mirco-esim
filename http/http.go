@@ -90,7 +90,7 @@ func (c *Client) SendPost(ctx context.Context, addr, contentType string, body io
 		Post(strings.TrimSpace(addr))
 }
 
-// 兼容老的Get方法
+// 兼容老的Get方法, 不建议再使用
 func (c *Client) Get(ctx context.Context, addr string) (resp *http.Response, err error) {
 	var (
 		rtyResp *resty.Response
@@ -105,7 +105,7 @@ func (c *Client) Get(ctx context.Context, addr string) (resp *http.Response, err
 	return rtyResp.RawResponse, err
 }
 
-// 兼容老的POST方法
+// 兼容老的POST方法，不建议再使用
 func (c *Client) Post(ctx context.Context, addr, contentType string, body io.Reader) (resp *http.Response, err error) {
 	var (
 		rtyResp *resty.Response
@@ -124,7 +124,7 @@ func (c *Client) Post(ctx context.Context, addr, contentType string, body io.Rea
 	return rtyResp.RawResponse, err
 }
 
-// 兼容老PostForm方法
+// 兼容老PostForm方法，不建议再使用
 func (c *Client) PostForm(ctx context.Context, addr string, data url.Values) (resp *http.Response, err error) {
 	return c.Post(ctx, addr, "application/x-www-form-urlencoded", strings.NewReader(data.Encode()))
 }
