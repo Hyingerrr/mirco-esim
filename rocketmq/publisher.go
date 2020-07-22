@@ -61,6 +61,16 @@ func (p *Publisher) PublishMessage(topicName, messageBody string) error {
 	return p.publish(topicName, msg)
 }
 
+// with message tag and key
+func (p *Publisher) PublishMsgWithTag(topicName, messageBody, messageTag, messageKey string) error {
+	msg := mq_http_sdk.PublishMessageRequest{
+		MessageBody: messageBody,
+		MessageTag:  messageTag,
+		MessageKey:  messageKey,
+	}
+	return p.publish(topicName, msg)
+}
+
 func (p *Publisher) PublishDelayMessage(topicName, messageBody string, delay time.Duration) error {
 	msg := mq_http_sdk.PublishMessageRequest{
 		MessageBody:      messageBody,
