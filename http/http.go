@@ -79,6 +79,13 @@ func (ClientOptions) WithInsecureSkip() Options {
 	}
 }
 
+func (c *Client) SetKeepAliveDisable() *Client {
+	c.Client = c.Client.SetTransport(&http.Transport{
+		DisableKeepAlives: false,
+	})
+	return c
+}
+
 func (c *Client) SendGet(ctx context.Context, addr string) (rtyResp *resty.Response, err error) {
 	return c.Client.R().SetContext(ctx).EnableTrace().Get(strings.TrimSpace(addr))
 }
