@@ -79,9 +79,9 @@ func (ClientOptions) WithInsecureSkip() Options {
 	}
 }
 
-func (c *Client) SetKeepAliveDisable() *Client {
+func (c *Client) SetKeepAliveDisable(b bool) *Client {
 	c.Client = c.Client.SetTransport(&http.Transport{
-		DisableKeepAlives: false,
+		DisableKeepAlives: b,
 	})
 	return c
 }
