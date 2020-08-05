@@ -52,7 +52,9 @@ func provideConf() config.Config {
 }
 
 var prometheusFunc = func(conf config.Config, logger log.Logger) *prometheus.Prometheus {
-	var httpAddr string
+	//此处暂且不用
+	return nil
+	/*var httpAddr string
 	if conf.GetString("prometheus_http_addr") != "" {
 		httpAddr = conf.GetString("prometheus_http_addr")
 	} else {
@@ -60,6 +62,8 @@ var prometheusFunc = func(conf config.Config, logger log.Logger) *prometheus.Pro
 		return nil
 	}
 	return prometheus.NewPrometheus(httpAddr, logger)
+
+	*/
 }
 
 func SetPrometheusFunc(pt func(config.Config, log.Logger) *prometheus.Prometheus) {
