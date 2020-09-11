@@ -88,6 +88,25 @@ func (p *Publisher) PublishDelayMessage(topicName, messageBody string, delay tim
 	return p.publish(topicName, msg)
 }
 
+func (p *Publisher) PublishDelayMsgWithTag(topicName, messageBody, messageTag string, delay time.Duration) error {
+	msg := mq_http_sdk.PublishMessageRequest{
+		MessageBody:      messageBody,
+		MessageTag:       messageTag,
+		StartDeliverTime: time.Now().Add(delay).UTC().Unix() * 1000, //值为毫秒级别的Unix时间戳
+	}
+	return p.publish(topicName, msg)
+}
+
+func (p *Publisher) PublishDelayMsgWithKeyTag(topicName, messageBody, messageTag, messageKey string, delay time.Duration) error {
+	msg := mq_http_sdk.PublishMessageRequest{
+		MessageBody:      messageBody,
+		MessageTag:       messageTag,
+		MessageKey:       messageKey,
+		StartDeliverTime: time.Now().Add(delay).UTC().Unix() * 1000, //值为毫秒级别的Unix时间戳
+	}
+	return p.publish(topicName, msg)
+}
+
 func (p *Publisher) PublishMessageProp(topicName, messageTag, messageBody string, properties map[string]string) error {
 	msg := mq_http_sdk.PublishMessageRequest{
 		MessageBody: messageBody,
