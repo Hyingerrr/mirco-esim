@@ -3,7 +3,7 @@ package container
 import (
 	"github.com/google/wire"
 	"github.com/jukylin/esim/config"
-	"github.com/jukylin/esim/prometheus"
+	"github.com/jukylin/esim/metrics"
 	"github.com/opentracing/opentracing-go"
 )
 
@@ -13,8 +13,8 @@ func provideMockConf() config.Config {
 	return conf
 }
 
-func provideMockProme(conf config.Config) *prometheus.Prometheus {
-	return prometheus.NewNullProme()
+func provideMockProme(conf config.Config) *metrics.Prometheus {
+	return metrics.NewNullProme()
 }
 
 func provideMockAppName(conf config.Config) string {

@@ -1,4 +1,4 @@
-package prometheus
+package metrics
 
 import (
 	"net/http"
@@ -27,7 +27,31 @@ func NewPrometheus(httpAddr string, logger log.Logger) *Prometheus {
 }
 
 func NewNullProme() *Prometheus {
-	prome := &Prometheus{}
+	return &Prometheus{}
+}
 
-	return prome
+type VectorOpts struct {
+	Namespace string
+	Subsystem string
+	Name      string
+	Help      string
+	Labels    []string
+}
+
+type HistogramVecOpts struct {
+	Namespace string
+	Subsystem string
+	Name      string
+	Help      string
+	Labels    []string
+	Buckets   []float64
+}
+
+type SummaryOpts struct {
+	Namespace  string
+	Subsystem  string
+	Name       string
+	Help       string
+	Labels     []string
+	Objectives map[float64]float64
 }

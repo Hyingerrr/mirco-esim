@@ -6,8 +6,8 @@ import (
 	"github.com/google/wire"
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
+	"github.com/jukylin/esim/metrics"
 	eot "github.com/jukylin/esim/opentracing"
-	"github.com/jukylin/esim/prometheus"
 	"github.com/opentracing/opentracing-go"
 )
 
@@ -19,7 +19,7 @@ const defaultPrometheusHTTPArrd = "9002"
 
 // Esim init start.
 type Esim struct {
-	prometheus *prometheus.Prometheus
+	prometheus *metrics.Prometheus
 
 	Logger log.Logger
 
@@ -51,25 +51,24 @@ func provideConf() config.Config {
 	return confFunc()
 }
 
-var prometheusFunc = func(conf config.Config, logger log.Logger) *prometheus.Prometheus {
+var prometheusFunc = func(conf config.Config, logger log.Logger) *metrics.Prometheus {
 	//此处暂且不用
-	return nil
-	/*var httpAddr string
+	//return nil
+	var httpAddr string
 	if conf.GetString("prometheus_http_addr") != "" {
 		httpAddr = conf.GetString("prometheus_http_addr")
 	} else {
 		httpAddr = defaultPrometheusHTTPArrd
 		return nil
 	}
-	return prometheus.NewPrometheus(httpAddr, logger)
+	return metrics.NewPrometheus(httpAddr, logger)
 
-	*/
 }
 
-func SetPrometheusFunc(pt func(config.Config, log.Logger) *prometheus.Prometheus) {
+func SetPrometheusFunc(pt func(config.Config, log.Logger) *metrics.Prometheus) {
 	prometheusFunc = pt
 }
-func providePrometheus(conf config.Config, logger log.Logger) *prometheus.Prometheus {
+func providePrometheus(conf config.Config, logger log.Logger) *metrics.Prometheus {
 	return prometheusFunc(conf, logger)
 }
 

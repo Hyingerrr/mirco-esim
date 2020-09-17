@@ -258,10 +258,10 @@ func (c *Client) Stats() {
 		case <-ticker.C:
 			stats = c.client.Stats()
 
-			activeCountLab := prometheus.Labels{"stats": "active_count"}
+			activeCountLab := prometheus.Labels{"service": c.conf.GetString("appname"), "stats": "active_count"}
 			redisStats.With(activeCountLab).Set(float64(stats.ActiveCount))
 
-			idleCountLab := prometheus.Labels{"stats": "idle_count"}
+			idleCountLab := prometheus.Labels{"service": c.conf.GetString("appname"), "stats": "idle_count"}
 			redisStats.With(idleCountLab).Set(float64(stats.IdleCount))
 
 		case <-c.closeChan:

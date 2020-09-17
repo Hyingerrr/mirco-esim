@@ -9,7 +9,7 @@ var redisTotal = prometheus.NewCounterVec(
 		Name: "redis_total",
 		Help: "Number of hello requests in total",
 	},
-	[]string{"cmd"},
+	[]string{"service", "cmd"},
 )
 
 // redis_duration_seconds.
@@ -19,7 +19,7 @@ var redisDuration = prometheus.NewHistogramVec(
 		Help:    "redis duration distribution",
 		Buckets: []float64{0.001, 0.003, 0.005, 0.007, 0.01},
 	},
-	[]string{"cmd"},
+	[]string{"service", "cmd"},
 )
 
 var redisStats = prometheus.NewGaugeVec(
@@ -27,7 +27,7 @@ var redisStats = prometheus.NewGaugeVec(
 		Name: "redis_stats",
 		Help: "pool's statistics",
 	},
-	[]string{"stats"},
+	[]string{"service", "stats"},
 )
 
 func init() {

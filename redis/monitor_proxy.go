@@ -197,8 +197,8 @@ func (mp *MonitorProxy) redisSlowCommand(ctx context.Context, info *execInfo) {
 }
 
 func (mp *MonitorProxy) redisMetrics(ctx context.Context, info *execInfo) {
-	redisTotalLab := prometheus.Labels{"cmd": info.commandName}
-	redisDurationLab := prometheus.Labels{"cmd": info.commandName}
+	redisTotalLab := prometheus.Labels{"service": mp.conf.GetString("appname"), "cmd": info.commandName}
+	redisDurationLab := prometheus.Labels{"service": mp.conf.GetString("appname"), "cmd": info.commandName}
 
 	redisTotal.With(redisTotalLab).Inc()
 	redisDuration.With(redisDurationLab).Observe(info.endTime.Sub(info.startTime).Seconds())
