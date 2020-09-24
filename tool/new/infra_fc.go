@@ -12,6 +12,8 @@ import (
 	"github.com/jukylin/esim/container"
 	"github.com/jukylin/esim/mysql"
 	"github.com/jukylin/esim/grpc"
+	"github.com/jukylin/esim/pkg/uid"
+	"github.com/jukylin/esim/pkg/validate"
 	"{{.ProPath}}{{.ServerName}}/internal/infra/repo"
 )
 
@@ -31,6 +33,10 @@ type Infra struct {
 
 	GrpcClient *grpc.Client
 
+	Validate validate.ValidateRepo
+
+	Uid uid.UIDRepo
+
 	UserRepo repo.UserRepo
 }
 
@@ -38,6 +44,8 @@ type Infra struct {
 var infraSet = wire.NewSet(
 	wire.Struct(new(Infra), "*"),
 	provideDb,
+	provideValidate,
+	provideUid,
 	provideUserRepo,
 )
 
@@ -100,6 +108,14 @@ func provideDb(esim *container.Esim) *mysql.Client {
 
 func provideUserRepo(esim *container.Esim) repo.UserRepo {
 	return repo.NewDBUserRepo(esim.Logger)
+}
+
+func provideValidate() validate.ValidateRepo {
+	return validate.NewValidateRepo()
+}
+
+func provideUid() uid.UIDRepo {
+	return uid.NewUIDRepo()
 }
 
 func provideGrpcClient(esim *container.Esim) *grpc.Client {
