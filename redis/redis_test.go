@@ -9,45 +9,43 @@ import (
 
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
-	"github.com/ory/dockertest/v3"
-	dc "github.com/ory/dockertest/v3/docker"
 	"github.com/prometheus/client_golang/prometheus"
 	io_prometheus_client "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestMain(m *testing.M) {
-	logger := log.NewLogger()
+	//logger := log.NewLogger()
 
-	pool, err := dockertest.NewPool("")
-	if err != nil {
-		logger.Fatalf("Could not connect to docker : %s", err)
-	}
-	opt := &dockertest.RunOptions{
-		Repository: "redis",
-		Tag:        "latest",
-	}
-
-	resource, err := pool.RunWithOptions(opt, func(hostConfig *dc.HostConfig) {
-		hostConfig.PortBindings = map[dc.Port][]dc.PortBinding{
-			"6379/tcp": {{HostIP: "", HostPort: "6379"}},
-		}
-	})
-	if err != nil {
-		logger.Fatalf("Could not start resource: %s", err.Error())
-	}
-
-	err = resource.Expire(60)
-	if err != nil {
-		logger.Fatalf(err.Error())
-	}
+	//pool, err := dockertest.NewPool("")
+	//if err != nil {
+	//	logger.Fatalf("Could not connect to docker : %s", err)
+	//}
+	//opt := &dockertest.RunOptions{
+	//	Repository: "redis",
+	//	Tag:        "latest",
+	//}
+	//
+	//resource, err := pool.RunWithOptions(opt, func(hostConfig *dc.HostConfig) {
+	//	hostConfig.PortBindings = map[dc.Port][]dc.PortBinding{
+	//		"6379/tcp": {{HostIP: "", HostPort: "6379"}},
+	//	}
+	//})
+	//if err != nil {
+	//	logger.Fatalf("Could not start resource: %s", err.Error())
+	//}
+	//
+	//err = resource.Expire(60)
+	//if err != nil {
+	//	logger.Fatalf(err.Error())
+	//}
 
 	code := m.Run()
 
 	// You can't defer this because os.Exit doesn't care for defer
-	if err := pool.Purge(resource); err != nil {
-		logger.Fatalf("Could not purge resource: %s", err)
-	}
+	//if err := pool.Purge(resource); err != nil {
+	//	logger.Fatalf("Could not purge resource: %s", err)
+	//}
 
 	os.Exit(code)
 }

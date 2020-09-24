@@ -12,3 +12,10 @@ name : esim
 #log_max_age: 1   # 保留旧文件的最大天数
 #log_backup_count: 5  # 保留旧文件的最大个数
 #log_compress: true  # 是否压缩/归档旧文件
+
+redis_max_active : 50
+redis_max_idle : 100
+redis_idle_time_out : 600
+redis_host : 192.168.3.154
+redis_port : 6379
+redis_password: ""
