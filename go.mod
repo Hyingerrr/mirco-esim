@@ -6,9 +6,12 @@ require (
 	github.com/aliyunmq/mq-http-go-sdk v0.0.0-20190911115909-92078b373925
 	github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd // indirect
 	github.com/davecgh/go-spew v1.1.1
+	github.com/dgraph-io/ristretto v0.0.3
 	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/gin-gonic/gin v1.6.3
+	github.com/go-playground/locales v0.13.0
+	github.com/go-playground/universal-translator v0.17.0
 	github.com/go-playground/validator/v10 v10.2.0
 	github.com/go-resty/resty/v2 v2.3.0
 	github.com/go-sql-driver/mysql v1.5.0
@@ -31,11 +34,14 @@ require (
 	github.com/opentracing-contrib/go-stdlib v1.0.0
 	github.com/opentracing/opentracing-go v1.1.0
 	github.com/ory/dockertest/v3 v3.6.0
+	github.com/pkg/errors v0.8.1
 	github.com/prometheus/client_golang v1.5.1
 	github.com/prometheus/client_model v0.2.0
 	github.com/prometheus/common v0.10.0 // indirect
 	github.com/prometheus/procfs v0.1.3 // indirect
+	github.com/segmentio/ksuid v1.0.3
 	github.com/serenize/snaker v0.0.0-20171204205717-a683aaf2d516
+	github.com/sony/sonyflake v1.0.0
 	github.com/spf13/cast v1.3.1
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/viper v1.7.0
@@ -46,6 +52,7 @@ require (
 	github.com/vektra/mockery v1.1.2
 	go.mongodb.org/mongo-driver v1.3.4
 	go.uber.org/zap v1.15.0
+	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381
 	golang.org/x/sys v0.0.0-20200625212154-ddb9806d33ae // indirect
 	golang.org/x/text v0.3.3 // indirect
