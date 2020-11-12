@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/gomodule/redigo/redis"
 )
@@ -27,12 +26,12 @@ func (c *Client) GetBytes(ctx context.Context, key string) ([]byte, error) {
 	return redis.Bytes(redisConn.Do(ctx, "GET", key))
 }
 
-// SET
-func (c *Client) Set(ctx context.Context, key string, val interface{}, expiration time.Duration) error {
+// SET, expiration 单位s
+func (c *Client) Set(ctx context.Context, key string, val interface{}, expiration int64) error {
 	redisConn := c.GetCtxRedisConn()
 	defer redisConn.Close()
 
-	_, err := redisConn.Do(ctx, "SET", key, val, "EX", expiration.Seconds())
+	_, err := redisConn.Do(ctx, "SET", key, val, "EX", expiration)
 	return err
 }
 
@@ -52,7 +51,12 @@ func (c *Client) HSet(ctx context.Context, key string, field string, val interfa
 	redisConn := c.GetCtxRedisConn()
 	defer redisConn.Close()
 
-	_, err := redisConn.Do(ctx, "HSET", key, field, val)
+	value, err := c.encode(val)
+	if err != nil {
+		return err
+	}
+	_, err = redisConn.Do(ctx, "HSET", key, field, value)
+
 	return err
 }
 
@@ -133,19 +137,32 @@ func (c *Client) RPop(ctx context.Context, key string) (interface{}, error) {
 }
 
 // LPush 将一个值插入到列表头部
-func (c *Client) LPush(ctx context.Context, key string, val interface{}) (bool, error) {
+func (c *Client) LPush(ctx context.Context, key string, val interface{}) error {
 	redisConn := c.GetCtxRedisConn()
 	defer redisConn.Close()
 
-	return redis.Bool(redisConn.Do(ctx, "LPUSH", redis.Args{}.Add(key).AddFlat(val)))
+	value, err := c.encode(val)
+	if err != nil {
+		return err
+	}
+
+	_, err = redisConn.Do(ctx, "LPUSH", key, value)
+
+	return err
 }
 
 // RPush 将一个值插入到列表尾部
-func (c *Client) RPush(ctx context.Context, key string, val interface{}) (bool, error) {
+func (c *Client) RPush(ctx context.Context, key string, val interface{}) error {
 	redisConn := c.GetCtxRedisConn()
 	defer redisConn.Close()
 
-	return redis.Bool(redisConn.Do(ctx, "RPUSH", redis.Args{}.Add(key).AddFlat(val)))
+	value, err := c.encode(val)
+	if err != nil {
+		return err
+	}
+
+	_, err = redisConn.Do(ctx, "RPUSH", key, value)
+	return err
 }
 
 // 区间以偏移量 start 和 end
@@ -163,12 +180,14 @@ func (c *Client) LRange(ctx context.Context, key string, start, end int) (interf
 // --------------------------- KEYS ------------------------- //
 // ----------------------------------------------------------- //
 
-// key 设置过期时间
-func (c *Client) Expire(ctx context.Context, key string, expiration time.Duration) (bool, error) {
+// key 设置过期时间  单位s
+func (c *Client) Expire(ctx context.Context, key string, expiration int64) error {
 	redisConn := c.GetCtxRedisConn()
 	defer redisConn.Close()
 
-	return redis.Bool(redisConn.Do(ctx, "EXPIRE", key, expiration))
+	_, err := redis.Bool(redisConn.Do(ctx, "EXPIRE", key, expiration))
+
+	return err
 }
 
 // 判断key是否存在
@@ -189,4 +208,20 @@ func (c *Client) DeleteKey(ctx context.Context, key string) (bool, error) {
 
 func marshal(v interface{}) ([]byte, error) {
 	return json.Marshal(v)
+}
+
+// encode 序列化要保存的值
+func (c *Client) encode(val interface{}) (interface{}, error) {
+	var value interface{}
+	switch v := val.(type) {
+	case string, int, uint, int8, int16, int32, int64, float32, float64, bool:
+		value = v
+	default:
+		b, err := marshal(v)
+		if err != nil {
+			return nil, err
+		}
+		value = string(b)
+	}
+	return value, nil
 }

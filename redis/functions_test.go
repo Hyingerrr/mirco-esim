@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gomodule/redigo/redis"
+
 	"github.com/jukylin/esim/config"
 	"github.com/stretchr/testify/assert"
 )
@@ -33,20 +35,22 @@ func TestRedisClient_Funcs(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	// string
-	//{
-	//	key := "test_string"
-	//	val := `{"name": "HY", "sex": "man"}`
-	//	err = client.Set(ctx, key, val, 30*time.Second)
-	//	it.Nil(err)
-	//
-	//	result, err := client.Get(ctx, key)
-	//	it.Nil(err)
-	//	it.Equal(val, result)
-	//
-	//	buf, err := client.GetBytes(ctx, key)
-	//	it.Nil(err)
-	//	fmt.Println(string(buf))
-	//}
+	{
+		key := "test_string"
+		val := `{"name": "HY", "sex": "man"}`
+		err := client.Set(ctx, key, val, 3)
+		it.Nil(err)
+
+		time.Sleep(3 * time.Second)
+
+		result, err := client.Get(ctx, key)
+		it.Nil(err)
+		it.Equal(val, result)
+
+		buf, err := client.GetBytes(ctx, key)
+		it.Nil(err)
+		fmt.Println(string(buf))
+	}
 
 	// hash
 	{
@@ -76,5 +80,29 @@ func TestRedisClient_Funcs(t *testing.T) {
 		err = client.HGetAll(ctx, key, ms)
 		fmt.Printf("%+v\n", ms)
 		it.Nil(err)
+	}
+
+	// list
+	{
+		key := "list_test"
+		val := "1"
+		err := client.LPush(ctx, key, val)
+		it.Nil(err)
+
+		v, err := redis.String(client.LPop(ctx, key))
+		it.Nil(err)
+		it.Equal("1", v)
+	}
+
+	// keys
+	{
+		key := "list_test"
+		err := client.Expire(ctx, key, 5)
+		it.Nil(err)
+
+		time.Sleep(time.Second)
+		b, err := client.Exists(ctx, key)
+		it.Nil(err)
+		it.Equal(false, b)
 	}
 }
