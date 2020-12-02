@@ -69,6 +69,11 @@ func TestRedisClient_Funcs(t *testing.T) {
 		err = client.HMSet(ctx, key, m)
 		it.Nil(err)
 
+		keys := []interface{}{"name", "age"}
+		aa, err := client.HMGet(ctx, key, keys...)
+		it.Nil(err)
+		fmt.Println(aa)
+
 		type msTest struct {
 			Key string
 			Val string
