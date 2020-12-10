@@ -75,6 +75,13 @@ func (c *Client) HGet(ctx context.Context, key, field string) ([]byte, error) {
 	return redis.Bytes(redisConn.Do(ctx, "HGET", key, field))
 }
 
+func (c *Client) HMGet(ctx context.Context, key string, field ...interface{}) ([]string, error) {
+	redisConn := c.GetCtxRedisConn()
+	defer redisConn.Close()
+
+	return redis.Strings(redisConn.Do(ctx, "HMGET", redis.Args{}.Add(key).AddFlat(field)...))
+}
+
 func (c *Client) HGetAll(ctx context.Context, key string, val interface{}) error {
 	redisConn := c.GetCtxRedisConn()
 	defer redisConn.Close()
@@ -224,4 +231,11 @@ func (c *Client) encode(val interface{}) (interface{}, error) {
 		value = string(b)
 	}
 	return value, nil
+}
+
+func (c *Client) SelectDB(ctx context.Context, db int) error {
+	redisConn := c.GetCtxRedisConn()
+	defer redisConn.Close()
+	_, err := redisConn.Do(ctx, "SELECT", db)
+	return err
 }

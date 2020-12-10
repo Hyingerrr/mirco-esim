@@ -19,3 +19,8 @@ redis_idle_time_out : 600
 redis_host : 192.168.3.154
 redis_port : 6379
 redis_password: ""
+
+# 微信报警 配置样例
+wx_web_hook: e0c3df32-547b-4699-a887-67c5ae8ea877
+wx_retries: 3
+wx_interval: 3
