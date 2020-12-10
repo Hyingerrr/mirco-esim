@@ -272,18 +272,20 @@ func (se *SubscribeEngine) Start() {
 
 					// NextConsumeTime前若不确认消息消费成功，则消息会重复消费
 					// 消息句柄有时间戳，同一条消息每次消费拿到的都不一样
-					ackErr := consumer.AckMessage(handles)
-					if ackErr != nil {
-						// 某些消息的句柄可能超时了会导致确认不成功
-						se.logger.Errorf("AckMessage [%s]确认失败[%s]", handles, ackErr)
-						for _, errAckItem := range ackErr.(errors.ErrCode).Context()["Detail"].([]mq_http_sdk.ErrAckItem) {
-							se.logger.Errorf("AckMessage: ErrorHandle:%s, ErrorCode:%s, ErrorMsg:%s",
-								errAckItem.ErrorHandle, errAckItem.ErrorCode, errAckItem.ErrorMsg)
+					if len(handles) > 0 {
+						ackErr := consumer.AckMessage(handles)
+						if ackErr != nil {
+							// 某些消息的句柄可能超时了会导致确认不成功
+							se.logger.Errorf("AckMessage [%s]确认失败[%s]", handles, ackErr)
+							for _, errAckItem := range ackErr.(errors.ErrCode).Context()["Detail"].([]mq_http_sdk.ErrAckItem) {
+								se.logger.Errorf("AckMessage: ErrorHandle:%s, ErrorCode:%s, ErrorMsg:%s",
+									errAckItem.ErrorHandle, errAckItem.ErrorCode, errAckItem.ErrorMsg)
+							}
+							se.logger.Infof("休眠3秒钟后继续....")
+							time.Sleep(time.Duration(3) * time.Second)
 						}
-						se.logger.Infof("休眠3秒钟后继续....")
-						time.Sleep(time.Duration(3) * time.Second)
+						se.logger.Infof("Ack ---->[%s]确认成功;", handles)
 					}
-					se.logger.Infof("Ack ---->[%s]确认成功;", handles)
 				case err := <-errChan:
 					if strings.Contains(err.(errors.ErrCode).Error(), "MessageNotExist") {
 						se.logger.Debugf("ConsumeMessage No new message, continue")
