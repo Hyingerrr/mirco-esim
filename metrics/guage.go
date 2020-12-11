@@ -7,7 +7,7 @@ import (
 type GaugeVecOpts VectorOpts
 
 // 测量仪
-type GuageVec interface {
+type GaugeVec interface {
 	Set(v float64, labels ...string)
 	Inc(labels ...string)
 	Add(v float64, labels ...string)
@@ -18,7 +18,7 @@ type promGuageVec struct {
 	gauge *prometheus.GaugeVec
 }
 
-func NewGaugeVec(opts *GaugeVecOpts) GuageVec {
+func NewGaugeVec(opts *GaugeVecOpts) GaugeVec {
 	if opts == nil {
 		return nil
 	}

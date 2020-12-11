@@ -6,7 +6,7 @@ import (
 
 // 直方图
 type HistogramVec interface {
-	Observe(v int64, labels ...string)
+	Observe(v float64, labels ...string)
 	close() bool
 }
 
@@ -30,8 +30,8 @@ func NewHistogramVec(opts *HistogramVecOpts) HistogramVec {
 	return &promHistogramVec{histogram: vec}
 }
 
-func (hv *promHistogramVec) Observe(v int64, labels ...string) {
-	hv.histogram.WithLabelValues(labels...).Observe(float64(v))
+func (hv *promHistogramVec) Observe(v float64, labels ...string) {
+	hv.histogram.WithLabelValues(labels...).Observe(v)
 }
 
 func (hv *promHistogramVec) close() bool {

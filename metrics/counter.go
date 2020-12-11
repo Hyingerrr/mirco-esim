@@ -8,7 +8,7 @@ type CounterVecOpts VectorOpts
 
 // 计数器
 type CounterVec interface {
-	Inc(lables ...string)
+	Inc(labels ...string)
 	Add(v float64, labels ...string)
 	close() bool
 }

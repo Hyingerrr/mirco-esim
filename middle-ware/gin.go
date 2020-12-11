@@ -1,26 +1,40 @@
 package middleware
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"io/ioutil"
 	"net/http"
 	"time"
+
+	"github.com/jukylin/esim/pkg/common/rctx"
 
 	"github.com/gin-gonic/gin"
 	tracerid "github.com/jukylin/esim/pkg/tracer-id"
 	opentracing2 "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 func GinMonitor() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		start := time.Now()
+		var (
+			start  = time.Now()
+			ctx    = c.Request.Context()
+			labels []string
+		)
+
+		labels = append(labels,
+			c.Request.Host,
+			rctx.String(ctx, rctx.LabelTranCd),
+			rctx.String(ctx, rctx.LabelProdCd),
+			rctx.String(ctx, rctx.LabelAppID),
+		)
+
 		c.Next()
-		duration := time.Since(start)
-		requestTotal.With(prometheus.Labels{"method": c.Request.Method,
-			"endpoint": c.Request.Host}).Inc()
-		requestDuration.With(prometheus.Labels{"method": c.Request.Method,
-			"endpoint": c.Request.Host}).Observe(duration.Seconds())
+
+		serverReqQPS.Inc(labels...)
+		serverReqDuration.Observe(time.Since(start).Seconds(), labels...)
 	}
 }
 
@@ -57,6 +71,40 @@ func GinTracerID() gin.HandlerFunc {
 			c.Request = c.Request.WithContext(context.WithValue(c.Request.Context(),
 				tracerid.ActiveEsimKey, tracerID()))
 		}
+
+		c.Next()
+	}
+}
+
+func GinMetaDataToCtx() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var meta = new(rctx.CommonParams)
+		reqBuf, err := c.GetRawData()
+		if err != nil {
+			c.AbortWithStatus(http.StatusNotExtended)
+			return
+		}
+
+		err = json.Unmarshal(reqBuf, meta)
+		if err != nil {
+			c.AbortWithStatus(http.StatusNotExtended)
+			return
+		}
+
+		md := rctx.MD{
+			rctx.LabelProdCd:    meta.ParseProdCd(),
+			rctx.LabelAppID:     meta.AppID,
+			rctx.LabelMerID:     meta.ParseMerID(),
+			rctx.LabelRequestNo: meta.RequestNo,
+			rctx.LabelTranCd:    meta.ParseTranCd(),
+			rctx.LabelMethod:    c.Request.Method,
+			rctx.LabelProtocol:  rctx.HTTPProtocol,
+		}
+		rctx.NewContext(c.Request.Context(), md)
+
+		// request body put back to gin context body
+		// MUST
+		c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(reqBuf))
 
 		c.Next()
 	}

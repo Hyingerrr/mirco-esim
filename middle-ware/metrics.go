@@ -1,29 +1,17 @@
 package middleware
 
 import (
-	"github.com/prometheus/client_golang/prometheus"
+	"github.com/jukylin/esim/metrics"
+	"github.com/jukylin/esim/pkg/common/rctx"
 )
 
-func init() {
-	prometheus.MustRegister(requestTotal)
-	prometheus.MustRegister(requestDuration)
-}
+// request_total.
+var serverReqQPS = metrics.CreateMetricCount(
+	"requests_QPS",
+	[]string{rctx.LabelEndpoint, rctx.LabelTranCd, rctx.LabelProdCd, rctx.LabelAppID}...)
 
-// web_reqeust_total.
-var requestTotal = prometheus.NewCounterVec(
-	prometheus.CounterOpts{
-		Name: "web_reqeust_total",
-		Help: "Number of hello requests in total",
-	},
-	[]string{"method", "endpoint"},
-)
-
-// web_request_duration_seconds.
-var requestDuration = prometheus.NewHistogramVec(
-	prometheus.HistogramOpts{
-		Name:    "web_request_duration_seconds",
-		Help:    "web request duration distribution",
-		Buckets: []float64{0.1, 0.3, 0.5, 0.7, 0.9, 1, 3, 5, 10, 30, 100},
-	},
-	[]string{"method", "endpoint"},
-)
+// request_duration_seconds.
+var serverReqDuration = metrics.CreateMetricHistogram(
+	"requests_duration_seconds",
+	[]float64{0.1, 0.3, 0.5, 0.7, 0.9, 1, 3, 5, 10, 30, 100},
+	[]string{rctx.LabelEndpoint, rctx.LabelTranCd, rctx.LabelProdCd, rctx.LabelAppID}...)
