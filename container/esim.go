@@ -1,12 +1,17 @@
 package container
 
 import (
+	"net/http"
+	"strings"
 	"sync"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+
+	"github.com/jukylin/esim/metrics"
 
 	"github.com/google/wire"
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
-	"github.com/jukylin/esim/metrics"
 	eot "github.com/jukylin/esim/opentracing"
 	"github.com/opentracing/opentracing-go"
 )
@@ -52,22 +57,25 @@ func provideConf() config.Config {
 }
 
 var prometheusFunc = func(conf config.Config, logger log.Logger) *metrics.Prometheus {
-	//此处暂且不用
-	//return nil
-	var httpAddr string
-	if conf.GetString("prometheus_http_addr") != "" {
-		httpAddr = conf.GetString("prometheus_http_addr")
-	} else {
-		httpAddr = defaultPrometheusHTTPArrd
-		return nil
+	addr := conf.GetString("prometheus_http_addr")
+	if addr == "" {
+		addr = defaultPrometheusHTTPArrd
 	}
-	return metrics.NewPrometheus(httpAddr, logger)
 
+	if in := strings.Index(addr, ":"); in < 0 {
+		addr = ":" + addr
+	}
+
+	go func() {
+		http.Handle("/metrics", promhttp.Handler())
+		logger.Panicf(http.ListenAndServe(addr, nil).Error())
+	}()
+
+	logger.Info("Prometheus Server Init Success")
+
+	return &metrics.Prometheus{}
 }
 
-func SetPrometheusFunc(pt func(config.Config, log.Logger) *metrics.Prometheus) {
-	prometheusFunc = pt
-}
 func providePrometheus(conf config.Config, logger log.Logger) *metrics.Prometheus {
 	return prometheusFunc(conf, logger)
 }

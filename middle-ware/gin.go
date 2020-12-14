@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"time"
 
-	"github.com/jukylin/esim/pkg/common/rctx"
+	"github.com/jukylin/esim/config"
+	"github.com/jukylin/esim/pkg/common/metadata"
 
 	"github.com/gin-gonic/gin"
 	tracerid "github.com/jukylin/esim/pkg/tracer-id"
@@ -19,22 +21,31 @@ import (
 func GinMonitor() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var (
-			start  = time.Now()
-			ctx    = c.Request.Context()
-			labels []string
+			start     = time.Now()
+			ctx       = c.Request.Context()
+			labels    []string
+			respLabel []string
 		)
 
+		// request
 		labels = append(labels,
-			c.Request.Host,
-			rctx.String(ctx, rctx.LabelTranCd),
-			rctx.String(ctx, rctx.LabelProdCd),
-			rctx.String(ctx, rctx.LabelAppID),
-		)
+			metadata.String(ctx, metadata.LabelServiceName),
+			c.Request.URL.Path,
+			metadata.String(ctx, metadata.LabelTranCd),
+			metadata.String(ctx, metadata.LabelAppID))
+
+		// response
+		respLabel = append(respLabel,
+			metadata.String(ctx, metadata.LabelServiceName),
+			c.Request.URL.Path,
+			metadata.String(ctx, metadata.LabelTranCd),
+			fmt.Sprintf("%d", c.Writer.Status()))
 
 		c.Next()
 
 		serverReqQPS.Inc(labels...)
 		serverReqDuration.Observe(time.Since(start).Seconds(), labels...)
+		responseStatus.Inc(respLabel...)
 	}
 }
 
@@ -76,9 +87,9 @@ func GinTracerID() gin.HandlerFunc {
 	}
 }
 
-func GinMetaDataToCtx() gin.HandlerFunc {
+func GinMetaDataToCtx(conf config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var meta = new(rctx.CommonParams)
+		var meta = new(metadata.CommonParams)
 		reqBuf, err := c.GetRawData()
 		if err != nil {
 			c.AbortWithStatus(http.StatusNotExtended)
@@ -91,19 +102,21 @@ func GinMetaDataToCtx() gin.HandlerFunc {
 			return
 		}
 
-		md := rctx.MD{
-			rctx.LabelProdCd:    meta.ParseProdCd(),
-			rctx.LabelAppID:     meta.AppID,
-			rctx.LabelMerID:     meta.ParseMerID(),
-			rctx.LabelRequestNo: meta.RequestNo,
-			rctx.LabelTranCd:    meta.ParseTranCd(),
-			rctx.LabelMethod:    c.Request.Method,
-			rctx.LabelProtocol:  rctx.HTTPProtocol,
+		md := metadata.MD{
+			metadata.LabelProdCd:      meta.ParseProdCd(),
+			metadata.LabelAppID:       meta.AppID,
+			metadata.LabelMerID:       meta.ParseMerID(),
+			metadata.LabelRequestNo:   meta.RequestNo,
+			metadata.LabelTranCd:      meta.ParseTranCd(),
+			metadata.LabelMethod:      c.Request.Method,
+			metadata.LabelProtocol:    metadata.HTTPProtocol,
+			metadata.LabelUri:         c.Request.URL.Path,
+			metadata.LabelServiceName: conf.GetString("appname"),
 		}
-		rctx.NewContext(c.Request.Context(), md)
+		rCtx := metadata.NewContext(c.Request.Context(), md)
+		c.Request = c.Request.WithContext(rCtx)
 
-		// request body put back to gin context body
-		// MUST
+		// MUST: request body put back to gin context body
 		c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(reqBuf))
 
 		c.Next()

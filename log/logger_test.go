@@ -2,10 +2,11 @@ package log
 
 import (
 	"fmt"
-	"github.com/jukylin/esim/config"
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
+
+	"github.com/jukylin/esim/config"
+	"github.com/stretchr/testify/assert"
 )
 
 type Test struct {
@@ -17,7 +18,7 @@ type Test struct {
 func TestNewLogger(t *testing.T) {
 	var (
 		it = assert.New(t)
-		l Logger
+		l  Logger
 	)
 
 	it.NotPanics(func() {
@@ -28,7 +29,7 @@ func TestNewLogger(t *testing.T) {
 	})
 
 	// with map[string]interface{} and msg
-	l.WithFields(Field{"x":123, "y":345, "z": "hkhkh"}).Info("WithFields")
+	l.WithFields(Field{"x": 123, "y": 345, "z": "hkhkh"}).Info("WithFields")
 
 	// with msg
 	tx := Test{
@@ -60,7 +61,7 @@ func TestNewLogger(t *testing.T) {
 	// test 切割
 	goto End
 	{
-		timer := time.NewTicker(time.Millisecond*10)
+		timer := time.NewTicker(time.Millisecond * 10)
 		timer2 := time.NewTicker(3600 * time.Second)
 
 		for {
@@ -75,7 +76,6 @@ func TestNewLogger(t *testing.T) {
 			}
 		}
 	}
-
 
 End:
 	fmt.Println("task over")

@@ -14,7 +14,7 @@ func provideMockConf() config.Config {
 }
 
 func provideMockProme(conf config.Config) *metrics.Prometheus {
-	return metrics.NewNullProme()
+	return prometheusFunc(conf, nil)
 }
 
 func provideMockAppName(conf config.Config) string {

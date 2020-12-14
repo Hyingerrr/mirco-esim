@@ -74,6 +74,10 @@ func NewLogger(options ...Option) Logger {
 		opts = append(opts, zap.AddStacktrace(lever))
 	}
 
+	if l.Config.ErrStats {
+		opts = append(opts, zap.Hooks(addErrMetric))
+	}
+
 	for _, w := range writer {
 		core = append(core, zapcore.NewCore(l.buildEncoder(), w, zap.NewAtomicLevelAt(lever)))
 	}

@@ -10,7 +10,7 @@ func Monitor(h http.Handler) http.HandlerFunc {
 		start := time.Now()
 		h.ServeHTTP(w, r)
 		duration := time.Since(start)
-		serverReqTotal.Inc(r.Method, r.URL.Path)
+		serverReqQPS.Inc(r.Method, r.URL.Path)
 		serverReqDuration.Observe(duration.Seconds(), r.Method, r.URL.Path)
 	}
 }

@@ -14,6 +14,7 @@ type Config struct {
 	Format       string `yaml:"log_format"`
 	ReportCaller bool   `yaml:"log_report_caller"`
 	Stacktrace   bool   `yaml:"log_stack_trace"`
+	ErrStats     bool   `yaml:"log_err_stats"`
 	File         string `yaml:"log_file"`
 	MaxSize      int    `yaml:"log_max_size"`     // 单个文件最大size
 	MaxAge       int    `yaml:"log_max_age"`      // 保留旧文件的最大天数
