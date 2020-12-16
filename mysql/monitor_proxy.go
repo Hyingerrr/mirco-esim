@@ -9,7 +9,6 @@ import (
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/opentracing"
 	opentracing2 "github.com/opentracing/opentracing-go"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 type MonitorProxy struct {
@@ -162,9 +161,8 @@ func (mp *MonitorProxy) withSlowSQL(query string, beginTime, endTime time.Time) 
 }
 
 func (mp *MonitorProxy) withMysqlMetrics(query string, beginTime, endTime time.Time) {
-	lab := prometheus.Labels{"sql": query}
-	mysqlTotal.With(lab).Inc()
-	mysqlDuration.With(lab).Observe(endTime.Sub(beginTime).Seconds())
+	mysqlTotal.Inc(query)
+	mysqlDuration.Observe(endTime.Sub(beginTime).Seconds(), query)
 }
 
 // Waiting for version 2.0 .

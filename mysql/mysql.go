@@ -13,7 +13,6 @@ import (
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/proxy"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 var clientOnce sync.Once
@@ -259,21 +258,11 @@ func (c *Client) Stats() {
 		case <-ticker.C:
 			for dbName, db := range c.sqlDbs {
 				stats = db.Stats()
-
-				maxOpenConnLab := prometheus.Labels{"db": dbName, "stats": "max_open_conn"}
-				mysqlStats.With(maxOpenConnLab).Set(float64(stats.MaxOpenConnections))
-
-				openConnLab := prometheus.Labels{"db": dbName, "stats": "open_conn"}
-				mysqlStats.With(openConnLab).Set(float64(stats.OpenConnections))
-
-				inUseLab := prometheus.Labels{"db": dbName, "stats": "in_use"}
-				mysqlStats.With(inUseLab).Set(float64(stats.InUse))
-
-				idleLab := prometheus.Labels{"db": dbName, "stats": "idle"}
-				mysqlStats.With(idleLab).Set(float64(stats.Idle))
-
-				waitCountLab := prometheus.Labels{"db": dbName, "stats": "wait_count"}
-				mysqlStats.With(waitCountLab).Set(float64(stats.WaitCount))
+				mysqlStats.Set(float64(stats.MaxOpenConnections), dbName, "max_open_conn")
+				mysqlStats.Set(float64(stats.OpenConnections), dbName, "open_conn")
+				mysqlStats.Set(float64(stats.InUse), dbName, "in_use")
+				mysqlStats.Set(float64(stats.Idle), dbName, "idle")
+				mysqlStats.Set(float64(stats.WaitCount), dbName, "wait_count")
 			}
 		case <-c.closeChan:
 			c.logger.Infof("stop stats")
@@ -283,4 +272,5 @@ func (c *Client) Stats() {
 
 Stop:
 	ticker.Stop()
+	return
 }

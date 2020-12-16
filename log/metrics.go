@@ -9,7 +9,7 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-var logMetricErrorCounter = metrics.CreateMetricCount("log_error_stats", "caller")
+var logMetricErrorCounter = metrics.CreateMetricCount("log_error_stats", []string{"caller"}...)
 
 func addErrMetric(entry zapcore.Entry) error {
 	if entry.Level == zap.ErrorLevel {
