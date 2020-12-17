@@ -22,10 +22,12 @@ func TestNewLogger(t *testing.T) {
 	)
 
 	it.NotPanics(func() {
-		memConfig := config.NewMemConfig()
-		memConfig.Set("debug", true)
+		options := config.ViperConfOptions{}
+		conf := config.NewViperConfig(options.WithConfigType("yaml"),
+			options.WithConfFile([]string{"../config/a.yaml"}))
+		conf.Set("debug", false)
 		opt := LoggerOptions{}
-		l = NewLogger(opt.WithLoggerConf(memConfig))
+		l = NewLogger(opt.WithLoggerConf(conf))
 	})
 
 	// with map[string]interface{} and msg
@@ -37,10 +39,10 @@ func TestNewLogger(t *testing.T) {
 		B: 123,
 		C: map[string]string{"D": "888", "E": "999"},
 	}
-	l.Info("Info ...")
+	l.Error("Info ...")
 
 	// with msg and variable
-	l.Infof("infof: %+v", tx)
+	l.Errorf("infof: %+v", tx)
 
 	// with msg and []interface{}
 	l.InfoW("infoW", []interface{}{"baz", false, "xxx", tx}...)

@@ -57,6 +57,8 @@ func (c *Config) fillWithDefaultConfig(conf config.Config) {
 	if c.Format == "" {
 		c.Format = "text"
 	}
+
+	c.ErrStats = conf.GetBool("log_err_stats")
 }
 
 func (c *Config) IsOutStdout() bool {
