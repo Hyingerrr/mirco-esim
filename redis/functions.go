@@ -26,10 +26,15 @@ func (c *Client) GetBytes(ctx context.Context, key string) ([]byte, error) {
 	return redis.Bytes(redisConn.Do(ctx, "GET", key))
 }
 
-// SET, expiration 单位s
+// SET, expiration 单位s, 0永久
 func (c *Client) Set(ctx context.Context, key string, val interface{}, expiration int64) error {
 	redisConn := c.GetCtxRedisConn()
 	defer redisConn.Close()
+
+	if expiration == 0 {
+		_, err := redisConn.Do(ctx, "SET", key, val)
+		return err
+	}
 
 	_, err := redisConn.Do(ctx, "SET", key, val, "EX", expiration)
 	return err
