@@ -161,8 +161,8 @@ func (mp *MonitorProxy) withSlowSQL(query string, beginTime, endTime time.Time) 
 }
 
 func (mp *MonitorProxy) withMysqlMetrics(query string, beginTime, endTime time.Time) {
-	mysqlTotal.Inc(query)
-	mysqlDuration.Observe(endTime.Sub(beginTime).Seconds(), query)
+	mysqlDBTotal.Inc(query)
+	mysqlDBDuration.Observe(endTime.Sub(beginTime).Seconds(), query)
 }
 
 // Waiting for version 2.0 .

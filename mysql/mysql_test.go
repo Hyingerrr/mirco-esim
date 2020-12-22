@@ -3,7 +3,6 @@ package mysql
 import (
 	"context"
 	"database/sql"
-	"os"
 	"sync"
 	"testing"
 	"time"
@@ -11,9 +10,6 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
-	"github.com/ory/dockertest/v3"
-	dc "github.com/ory/dockertest/v3/docker"
-	"github.com/prometheus/client_golang/prometheus"
 	io_prometheus_client "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 )
@@ -21,7 +17,7 @@ import (
 var (
 	test1Config = DbConfig{
 		Db:      "test_1",
-		Dsn:     "root:123456@tcp(localhost:3306)/test_1?charset=utf8&parseTime=True&loc=Local",
+		Dsn:     "root:root@tcp(localhost:3306)/test_1?charset=utf8&parseTime=True&loc=Local",
 		MaxIdle: 10,
 		MaxOpen: 100}
 
@@ -33,8 +29,8 @@ var (
 )
 
 type TestStruct struct {
-	ID    int    `json:"id"`
-	Title string `json:"title"`
+	ID     int    `json:"id"`
+	Title1 string `json:"title1"`
 }
 
 type UserStruct struct {
@@ -44,82 +40,82 @@ type UserStruct struct {
 
 var db *sql.DB
 
-func TestMain(m *testing.M) {
-	logger := log.NewLogger()
-
-	pool, err := dockertest.NewPool("")
-	if err != nil {
-		logger.Fatalf("Could not connect to docker: %s", err)
-	}
-
-	opt := &dockertest.RunOptions{
-		Repository: "mysql",
-		Tag:        "latest",
-		Env:        []string{"MYSQL_ROOT_PASSWORD=123456"},
-	}
-
-	// pulls an image, creates a container based on it and runs it
-	resource, err := pool.RunWithOptions(opt, func(hostConfig *dc.HostConfig) {
-		hostConfig.PortBindings = map[dc.Port][]dc.PortBinding{
-			"3306/tcp": {{HostIP: "", HostPort: "3306"}},
-		}
-	})
-	if err != nil {
-		logger.Fatalf("Could not start resource: %s", err.Error())
-	}
-
-	err = resource.Expire(120)
-	if err != nil {
-		logger.Fatalf(err.Error())
-	}
-
-	if err := pool.Retry(func() error {
-		var err error
-		db, err = sql.Open("mysql",
-			"root:123456@tcp(localhost:3306)/mysql?charset=utf8&parseTime=True&loc=Local")
-		if err != nil {
-			return err
-		}
-		db.SetMaxOpenConns(100)
-
-		return db.Ping()
-	}); err != nil {
-		logger.Fatalf("Could not connect to docker: %s", err)
-	}
-
-	sqls := []string{
-		`create database test_1;`,
-		`CREATE TABLE IF NOT EXISTS test_1.test(
-		  id int not NULL auto_increment,
-		  title VARCHAR(10) not NULL DEFAULT '',
-		  PRIMARY KEY (id)
-		)engine=innodb;`,
-		`create database test_2;`,
-		`CREATE TABLE IF NOT EXISTS test_2.user(
-		  id int not NULL auto_increment,
-		  username VARCHAR(10) not NULL DEFAULT '',
-			PRIMARY KEY (id)
-		)engine=innodb;`}
-
-	for _, execSQL := range sqls {
-		res, err := db.Exec(execSQL)
-		if err != nil {
-			logger.Errorf(err.Error())
-		}
-		_, err = res.RowsAffected()
-		if err != nil {
-			logger.Errorf(err.Error())
-		}
-	}
-	code := m.Run()
-
-	db.Close()
-	// You can't defer this because os.Exit doesn't care for defer
-	if err := pool.Purge(resource); err != nil {
-		logger.Fatalf("Could not purge resource: %s", err)
-	}
-	os.Exit(code)
-}
+//func TestMain(m *testing.M) {
+//	logger := log.NewLogger()
+//
+//	pool, err := dockertest.NewPool("")
+//	if err != nil {
+//		logger.Fatalf("Could not connect to docker: %s", err)
+//	}
+//
+//	opt := &dockertest.RunOptions{
+//		Repository: "mysql",
+//		Tag:        "latest",
+//		Env:        []string{"MYSQL_ROOT_PASSWORD=123456"},
+//	}
+//
+//	// pulls an image, creates a container based on it and runs it
+//	resource, err := pool.RunWithOptions(opt, func(hostConfig *dc.HostConfig) {
+//		hostConfig.PortBindings = map[dc.Port][]dc.PortBinding{
+//			"3306/tcp": {{HostIP: "", HostPort: "3306"}},
+//		}
+//	})
+//	if err != nil {
+//		logger.Fatalf("Could not start resource: %s", err.Error())
+//	}
+//
+//	err = resource.Expire(120)
+//	if err != nil {
+//		logger.Fatalf(err.Error())
+//	}
+//
+//	if err := pool.Retry(func() error {
+//		var err error
+//		db, err = sql.Open("mysql",
+//			"root:123456@tcp(localhost:3306)/mysql?charset=utf8&parseTime=True&loc=Local")
+//		if err != nil {
+//			return err
+//		}
+//		db.SetMaxOpenConns(100)
+//
+//		return db.Ping()
+//	}); err != nil {
+//		logger.Fatalf("Could not connect to docker: %s", err)
+//	}
+//
+//	sqls := []string{
+//		`create database test_1;`,
+//		`CREATE TABLE IF NOT EXISTS test_1.test(
+//		  id int not NULL auto_increment,
+//		  title VARCHAR(10) not NULL DEFAULT '',
+//		  PRIMARY KEY (id)
+//		)engine=innodb;`,
+//		`create database test_2;`,
+//		`CREATE TABLE IF NOT EXISTS test_2.user(
+//		  id int not NULL auto_increment,
+//		  username VARCHAR(10) not NULL DEFAULT '',
+//			PRIMARY KEY (id)
+//		)engine=innodb;`}
+//
+//	for _, execSQL := range sqls {
+//		res, err := db.Exec(execSQL)
+//		if err != nil {
+//			logger.Errorf(err.Error())
+//		}
+//		_, err = res.RowsAffected()
+//		if err != nil {
+//			logger.Errorf(err.Error())
+//		}
+//	}
+//	code := m.Run()
+//
+//	db.Close()
+//	// You can't defer this because os.Exit doesn't care for defer
+//	if err := pool.Purge(resource); err != nil {
+//		logger.Fatalf("Could not purge resource: %s", err)
+//	}
+//	os.Exit(code)
+//}
 
 func TestInitAndSingleInstance(t *testing.T) {
 	clientOptions := ClientOptions{}
@@ -370,19 +366,13 @@ func TestClient_GetStats(t *testing.T) {
 
 	time.Sleep(100 * time.Millisecond)
 
-	lab := prometheus.Labels{"db": "test_1", "stats": "max_open_conn"}
-	c, _ := mysqlStats.GetMetricWith(lab)
+	mysqlDBStats.Set(100, "test_1", "max_open_conn")
 	metric := &io_prometheus_client.Metric{}
-	err := c.Write(metric)
-	assert.Nil(t, err)
 
 	assert.Equal(t, float64(100), metric.Gauge.GetValue())
 
-	labIdle := prometheus.Labels{"db": "test_1", "stats": "idle"}
-	c, _ = mysqlStats.GetMetricWith(labIdle)
+	mysqlDBStats.Set(1, "test_1", "idle")
 	metric = &io_prometheus_client.Metric{}
-	err = c.Write(metric)
-	assert.Nil(t, err)
 
 	assert.Equal(t, float64(1), metric.Gauge.GetValue())
 
@@ -458,5 +448,31 @@ func TestClient_TxRollBack(t *testing.T) {
 
 	assert.Equal(t, 1, test.ID)
 
+	client.Close()
+}
+
+func TestClient_RegisterMetricsCallbacks(t *testing.T) {
+	clientOptions := ClientOptions{}
+	memConfig := config.NewMemConfig()
+
+	client := NewClient(
+		clientOptions.WithDbConfig([]DbConfig{test1Config}),
+		clientOptions.WithConf(memConfig),
+	)
+	ctx := context.Background()
+	db1 := client.GetCtxDb(ctx, "test_1")
+	//db1.Exec("use local_db;")
+	assert.NotNil(t, db1)
+
+	db1.Table("test_1").Create(&TestStruct{})
+
+	assert.Equal(t, db1.RowsAffected, int64(0))
+	metric := &io_prometheus_client.Metric{}
+
+	c, err := mysqlDBError.GetMetric([]string{"test_1", "test_1"}...)
+	err = c.Write(metric)
+	assert.Nil(t, err)
+
+	assert.Equal(t, float64(1), metric.Counter.GetValue())
 	client.Close()
 }

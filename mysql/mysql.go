@@ -205,9 +205,9 @@ func (c *Client) GetDb(dbName string) *gorm.DB {
 }
 
 func (c *Client) getDb(ctx context.Context, dbName string) *gorm.DB {
-	_ = ctx
 	dbName = strings.ToLower(dbName)
 	if db, ok := c.gdbs[dbName]; ok {
+		c.RegisterMetricsCallbacks(ctx, db)
 		return db
 	}
 
@@ -258,11 +258,11 @@ func (c *Client) Stats() {
 		case <-ticker.C:
 			for dbName, db := range c.sqlDbs {
 				stats = db.Stats()
-				mysqlStats.Set(float64(stats.MaxOpenConnections), dbName, "max_open_conn")
-				mysqlStats.Set(float64(stats.OpenConnections), dbName, "open_conn")
-				mysqlStats.Set(float64(stats.InUse), dbName, "in_use")
-				mysqlStats.Set(float64(stats.Idle), dbName, "idle")
-				mysqlStats.Set(float64(stats.WaitCount), dbName, "wait_count")
+				mysqlDBStats.Set(float64(stats.MaxOpenConnections), dbName, "max_open_conn")
+				mysqlDBStats.Set(float64(stats.OpenConnections), dbName, "open_conn")
+				mysqlDBStats.Set(float64(stats.InUse), dbName, "in_use")
+				mysqlDBStats.Set(float64(stats.Idle), dbName, "idle")
+				mysqlDBStats.Set(float64(stats.WaitCount), dbName, "wait_count")
 			}
 		case <-c.closeChan:
 			c.logger.Infof("stop stats")

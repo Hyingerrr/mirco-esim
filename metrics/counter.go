@@ -10,6 +10,7 @@ type CounterVecOpts VectorOpts
 type CounterVec interface {
 	Inc(labels ...string)
 	Add(v float64, labels ...string)
+	GetMetric(labels ...string) (prometheus.Counter, error)
 	close() bool
 }
 
@@ -47,4 +48,8 @@ func (cv *promCounterVec) Add(n float64, labels ...string) {
 // close
 func (cv *promCounterVec) close() bool {
 	return prometheus.Unregister(cv.counter)
+}
+
+func (cv *promCounterVec) GetMetric(labels ...string) (prometheus.Counter, error) {
+	return cv.counter.GetMetricWithLabelValues(labels...)
 }
