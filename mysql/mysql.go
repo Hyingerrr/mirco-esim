@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	config2 "github.com/jukylin/esim/core/config"
+
 	_ "github.com/go-sql-driver/mysql"
 
 	"github.com/jinzhu/gorm"
@@ -26,7 +28,7 @@ type Client struct {
 
 	proxy []func() interface{}
 
-	conf config.Config
+	conf config2.Config
 
 	logger log.Logger
 
@@ -80,7 +82,7 @@ func NewClient(options ...Option) *Client {
 	return onceClient
 }
 
-func (ClientOptions) WithConf(conf config.Config) Option {
+func (ClientOptions) WithConf(conf config2.Config) Option {
 	return func(m *Client) {
 		m.conf = conf
 	}
@@ -207,6 +209,7 @@ func (c *Client) GetDb(dbName string) *gorm.DB {
 func (c *Client) getDb(ctx context.Context, dbName string) *gorm.DB {
 	dbName = strings.ToLower(dbName)
 	if db, ok := c.gdbs[dbName]; ok {
+		// 对象注册监控回调
 		c.RegisterMetricsCallbacks(ctx, db)
 		return db
 	}

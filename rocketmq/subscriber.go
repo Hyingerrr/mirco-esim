@@ -5,6 +5,8 @@ import (
 	"sync"
 	"time"
 
+	config2 "github.com/jukylin/esim/core/config"
+
 	mq_http_sdk "github.com/aliyunmq/mq-http-go-sdk"
 	"github.com/gogap/errors"
 	"github.com/jukylin/esim/config"
@@ -51,7 +53,7 @@ type SubscribeEngine struct {
 
 	logger log.Logger
 
-	conf config.Config
+	conf config2.Config
 
 	handlers HandlersChain
 
@@ -100,7 +102,7 @@ func NewSubscribeEngine(options ...SubscribeEngineOption) *SubscribeEngine {
 	return onceSubEngine
 }
 
-func WithSubscribeEngineConf(conf config.Config) SubscribeEngineOption {
+func WithSubscribeEngineConf(conf config2.Config) SubscribeEngineOption {
 	return func(se *SubscribeEngine) {
 		se.conf = conf
 	}

@@ -9,8 +9,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/jukylin/esim/config"
-	"github.com/jukylin/esim/pkg/common/metadata"
+	config2 "github.com/jukylin/esim/core/config"
+
+	"github.com/jukylin/esim/pkg/common/meta"
 
 	"github.com/gin-gonic/gin"
 	tracerid "github.com/jukylin/esim/pkg/tracer-id"
@@ -29,16 +30,16 @@ func GinMonitor() gin.HandlerFunc {
 
 		// request
 		labels = append(labels,
-			metadata.String(ctx, metadata.LabelServiceName),
+			meta.String(ctx, meta.ServiceName),
 			c.Request.URL.Path,
-			metadata.String(ctx, metadata.LabelTranCd),
-			metadata.String(ctx, metadata.LabelAppID))
+			meta.String(ctx, meta.TranCd),
+			meta.String(ctx, meta.AppID))
 
 		// response
 		respLabel = append(respLabel,
-			metadata.String(ctx, metadata.LabelServiceName),
+			meta.String(ctx, meta.ServiceName),
 			c.Request.URL.Path,
-			metadata.String(ctx, metadata.LabelTranCd),
+			meta.String(ctx, meta.TranCd),
 			fmt.Sprintf("%d", c.Writer.Status()))
 
 		c.Next()
@@ -87,9 +88,9 @@ func GinTracerID() gin.HandlerFunc {
 	}
 }
 
-func GinMetaDataToCtx(conf config.Config) gin.HandlerFunc {
+func GinMetaDataToCtx(conf config2.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var meta = new(metadata.CommonParams)
+		var meta = new(meta.CommonParams)
 		reqBuf, err := c.GetRawData()
 		if err != nil {
 			c.AbortWithStatus(http.StatusNotExtended)
@@ -102,18 +103,18 @@ func GinMetaDataToCtx(conf config.Config) gin.HandlerFunc {
 			return
 		}
 
-		md := metadata.MD{
-			metadata.LabelProdCd:      meta.ParseProdCd(),
-			metadata.LabelAppID:       meta.AppID,
-			metadata.LabelMerID:       meta.ParseMerID(),
-			metadata.LabelRequestNo:   meta.RequestNo,
-			metadata.LabelTranCd:      meta.ParseTranCd(),
-			metadata.LabelMethod:      c.Request.Method,
-			metadata.LabelProtocol:    metadata.HTTPProtocol,
-			metadata.LabelUri:         c.Request.URL.Path,
-			metadata.LabelServiceName: conf.GetString("appname"),
+		md := meta.MD{
+			meta.LabelProdCd:      meta.ParseProdCd(),
+			meta.LabelAppID:       meta.AppID,
+			meta.LabelMerID:       meta.ParseMerID(),
+			meta.LabelRequestNo:   meta.RequestNo,
+			meta.LabelTranCd:      meta.ParseTranCd(),
+			meta.LabelMethod:      c.Request.Method,
+			meta.LabelProtocol:    meta.HTTPProtocol,
+			meta.LabelUri:         c.Request.URL.Path,
+			meta.LabelServiceName: conf.GetString("appname"),
 		}
-		rCtx := metadata.NewContext(c.Request.Context(), md)
+		rCtx := meta.NewContext(c.Request.Context(), md)
 		c.Request = c.Request.WithContext(rCtx)
 
 		// MUST: request body put back to gin context body

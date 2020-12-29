@@ -3,6 +3,8 @@ package rocketmq
 import (
 	"time"
 
+	config2 "github.com/jukylin/esim/core/config"
+
 	mq_http_sdk "github.com/aliyunmq/mq-http-go-sdk"
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
@@ -13,7 +15,7 @@ type Publisher struct {
 
 	logger log.Logger
 
-	conf config.Config
+	conf config2.Config
 }
 
 type PublisherOption func(*Publisher)
@@ -42,7 +44,7 @@ func NewPublisher(options ...PublisherOption) *Publisher {
 	return p
 }
 
-func WithPublisherConf(conf config.Config) PublisherOption {
+func WithPublisherConf(conf config2.Config) PublisherOption {
 	return func(p *Publisher) {
 		p.conf = conf
 	}

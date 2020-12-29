@@ -5,6 +5,8 @@ import (
 	"net"
 	"time"
 
+	config2 "github.com/jukylin/esim/core/config"
+
 	"github.com/davecgh/go-spew/spew"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
@@ -43,7 +45,7 @@ type Server struct {
 
 	logger log.Logger
 
-	conf config.Config
+	conf config2.Config
 
 	unaryServerInterceptors []grpc.UnaryServerInterceptor
 
@@ -156,7 +158,7 @@ func NewServer(target string, options ...ServerOption) *Server {
 	return Server
 }
 
-func (ServerOptions) WithServerConf(conf config.Config) ServerOption {
+func (ServerOptions) WithServerConf(conf config2.Config) ServerOption {
 	return func(g *Server) {
 		g.conf = conf
 	}

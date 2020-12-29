@@ -5,6 +5,8 @@ import (
 	"strings"
 	"sync"
 
+	config2 "github.com/jukylin/esim/core/config"
+
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/jukylin/esim/metrics"
@@ -28,7 +30,7 @@ type Esim struct {
 
 	Logger log.Logger
 
-	Conf config.Config
+	Conf config2.Config
 
 	Tracer opentracing.Tracer
 
@@ -45,18 +47,18 @@ var esimSet = wire.NewSet(
 	provideAppName,
 )
 
-var confFunc = func() config.Config {
+var confFunc = func() config2.Config {
 	return config.NewMemConfig()
 }
 
-func SetConfFunc(conf func() config.Config) {
+func SetConfFunc(conf func() config2.Config) {
 	confFunc = conf
 }
-func provideConf() config.Config {
+func provideConf() config2.Config {
 	return confFunc()
 }
 
-var prometheusFunc = func(conf config.Config, logger log.Logger) *metrics.Prometheus {
+var prometheusFunc = func(conf config2.Config, logger log.Logger) *metrics.Prometheus {
 	addr := conf.GetString("prometheus_http_addr")
 	if addr == "" {
 		addr = defaultPrometheusHTTPArrd
@@ -76,11 +78,11 @@ var prometheusFunc = func(conf config.Config, logger log.Logger) *metrics.Promet
 	return &metrics.Prometheus{}
 }
 
-func providePrometheus(conf config.Config, logger log.Logger) *metrics.Prometheus {
+func providePrometheus(conf config2.Config, logger log.Logger) *metrics.Prometheus {
 	return prometheusFunc(conf, logger)
 }
 
-var loggerFunc = func(conf config.Config) log.Logger {
+var loggerFunc = func(conf config2.Config) log.Logger {
 	var loggerOptions log.LoggerOptions
 	logger := log.NewLogger(
 		loggerOptions.WithLoggerConf(conf),
@@ -90,14 +92,14 @@ var loggerFunc = func(conf config.Config) log.Logger {
 	return logger
 }
 
-func SetLogger(logger func(config.Config) log.Logger) {
+func SetLogger(logger func(config2.Config) log.Logger) {
 	loggerFunc = logger
 }
-func provideLogger(conf config.Config) log.Logger {
+func provideLogger(conf config2.Config) log.Logger {
 	return loggerFunc(conf)
 }
 
-var tracerFunc = func(conf config.Config, logger log.Logger) opentracing.Tracer {
+var tracerFunc = func(conf config2.Config, logger log.Logger) opentracing.Tracer {
 	var appname string
 	if conf.GetString("appname") != "" {
 		appname = conf.GetString("appname")
@@ -109,14 +111,14 @@ var tracerFunc = func(conf config.Config, logger log.Logger) opentracing.Tracer 
 	return eot.NewTracer(appname, logger)
 }
 
-func SetTracer(tracer func(config.Config, log.Logger) opentracing.Tracer) {
+func SetTracer(tracer func(config2.Config, log.Logger) opentracing.Tracer) {
 	tracerFunc = tracer
 }
-func provideTracer(conf config.Config, logger log.Logger) opentracing.Tracer {
+func provideTracer(conf config2.Config, logger log.Logger) opentracing.Tracer {
 	return tracerFunc(conf, logger)
 }
 
-func provideAppName(conf config.Config) string {
+func provideAppName(conf config2.Config) string {
 	return conf.GetString("appname")
 }
 

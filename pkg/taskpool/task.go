@@ -4,6 +4,8 @@ import (
 	"context"
 	"sync"
 
+	config2 "github.com/jukylin/esim/core/config"
+
 	"github.com/jukylin/esim/config"
 
 	"github.com/jukylin/esim/log"
@@ -17,7 +19,7 @@ type TaskPool struct {
 	wg         *sync.WaitGroup
 	cancel     context.CancelFunc
 	logger     log.Logger
-	conf       config.Config
+	conf       config2.Config
 }
 
 type Option func(*TaskPool)
@@ -74,7 +76,7 @@ func WithTaskLogger(log log.Logger) Option {
 	}
 }
 
-func WithTaskConf(conf config.Config) Option {
+func WithTaskConf(conf config2.Config) Option {
 	return func(task *TaskPool) {
 		task.conf = conf
 	}

@@ -9,6 +9,8 @@ import (
 	"strings"
 	"testing"
 
+	config2 "github.com/jukylin/esim/core/config"
+
 	"fmt"
 
 	"github.com/jukylin/esim/config"
@@ -28,8 +30,8 @@ const (
 
 func TestMain(m *testing.M) {
 	loggerOptions := log.LoggerOptions{}
-	options := config.ViperConfOptions{}
-	conf := config.NewViperConfig(options.WithConfigType("yaml"),
+	options := config2.ViperConfOptions{}
+	conf := config2.NewViperConfig(options.WithConfigType("yaml"),
 		options.WithConfFile([]string{"/Users/hy/develop/esim/config/a.yaml"}))
 	logger = log.NewLogger(loggerOptions.WithDebug(true), loggerOptions.WithLoggerConf(conf))
 

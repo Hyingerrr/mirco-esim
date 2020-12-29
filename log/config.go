@@ -3,7 +3,8 @@ package log
 import (
 	"strings"
 
-	"github.com/jukylin/esim/config"
+	config2 "github.com/jukylin/esim/core/config"
+
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -22,7 +23,7 @@ type Config struct {
 	Compress     bool   `yaml:"log_compress"`     // 是否压缩/归档旧文件
 }
 
-func (c *Config) fillWithDefaultConfig(conf config.Config) {
+func (c *Config) fillWithDefaultConfig(conf config2.Config) {
 	c.Output = conf.GetString("log_output")
 	if c.Output == "" {
 		c.Output = "stdout"

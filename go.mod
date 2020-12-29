@@ -27,6 +27,7 @@ require (
 	github.com/hashicorp/go-plugin v1.0.1
 	github.com/jinzhu/gorm v1.9.14
 	github.com/json-iterator/go v1.1.10 // indirect
+	github.com/justinas/alice v1.2.0 // indirect
 	github.com/martinusso/inflect v0.0.0-20161215184957-e234d1ee70de
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/onsi/ginkgo v1.12.1 // indirect

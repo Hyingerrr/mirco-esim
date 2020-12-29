@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jukylin/esim/pkg/hepler"
+	config2 "github.com/jukylin/esim/core/config"
 
-	"github.com/jukylin/esim/config"
+	"github.com/jukylin/esim/pkg/hepler"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -20,8 +20,8 @@ func TestWXAlarm_SendMessage(t *testing.T) {
 		c   *WXAlarm
 	)
 
-	options := config.ViperConfOptions{}
-	conf := config.NewViperConfig(options.WithConfigType("yaml"),
+	options := config2.ViperConfOptions{}
+	conf := config2.NewViperConfig(options.WithConfigType("yaml"),
 		options.WithConfFile([]string{"../../config/a.yaml"}))
 
 	it.NotPanics(func() {

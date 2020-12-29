@@ -1,16 +1,19 @@
 package config
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"strings"
 	"time"
 
+	filedir "github.com/jukylin/esim/pkg/file-dir"
+
 	"github.com/spf13/viper"
 )
 
-var GlbConfig *viperConf
+var globalConf *viperConf
 
 type viperConf struct {
 	*viper.Viper
@@ -24,25 +27,32 @@ type ViperConfOptions struct{}
 
 type Option func(c *viperConf)
 
-func GetConfigClient() *viperConf {
-	return GlbConfig
+func LoadConf() *viperConf {
+	return globalConf
 }
 
 func NewViperConfig(options ...Option) Config {
-	viperConf := &viperConf{}
+	c := &viperConf{}
 
 	for _, option := range options {
-		option(viperConf)
+		option(c)
 	}
 
-	if viperConf.configType == "" {
-		viperConf.configType = "yaml"
+	if c.configType == "" {
+		c.configType = "yaml"
+	}
+
+	if c.configFile == nil {
+		dir := filedir.GetCurrentDir()
+		c.configFile = append(c.configFile,
+			fmt.Sprintf("%s/conf.yaml", dir),
+			fmt.Sprintf("%s/monitoring.yaml", dir))
 	}
 
 	v := viper.New()
-	v.SetConfigType(viperConf.configType)
+	v.SetConfigType(c.configType)
 
-	for k, configFile := range viperConf.configFile {
+	for k, configFile := range c.configFile {
 		if k == 0 {
 			content, err := ioutil.ReadFile(configFile)
 			if err != nil {
@@ -67,9 +77,9 @@ func NewViperConfig(options ...Option) Config {
 			}
 		}
 	}
-	viperConf.Viper = v
-	GlbConfig = viperConf
-	return viperConf
+	c.Viper = v
+	globalConf = c
+	return c
 }
 
 func (ViperConfOptions) WithConfigType(configType string) Option {

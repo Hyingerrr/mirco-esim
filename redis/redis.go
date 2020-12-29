@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	config2 "github.com/jukylin/esim/core/config"
+
 	"github.com/gomodule/redigo/redis"
 	"github.com/jukylin/esim/config"
 	elog "github.com/jukylin/esim/log"
@@ -22,7 +24,7 @@ type Client struct {
 
 	proxyConn []func() interface{}
 
-	conf config.Config
+	conf config2.Config
 
 	logger elog.Logger
 
@@ -145,7 +147,7 @@ func NewClient(options ...Option) *Client {
 	return onceClient
 }
 
-func (ClientOptions) WithConf(conf config.Config) Option {
+func (ClientOptions) WithConf(conf config2.Config) Option {
 	return func(r *Client) {
 		r.conf = conf
 	}

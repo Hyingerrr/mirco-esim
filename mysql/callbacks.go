@@ -22,7 +22,7 @@ func (c *Client) RegisterMetricsCallbacks(ctx context.Context, db *gorm.DB) {
 	})
 
 	db.Callback().Query().Before("gorm:query").Register("esim:before_query", func(scope *gorm.Scope) {
-		scope.InstanceSet("querystkey", time.Now())
+		scope.InstanceSet("now_query_key", time.Now())
 	})
 
 	db.Callback().Query().After("gorm:after_query").Register("esim:metrics_after_query", func(scope *gorm.Scope) {
@@ -55,7 +55,7 @@ func (c *Client) handleError(ctx context.Context, scope *gorm.Scope) {
 		mysqlDBMiss.Inc(schema, scope.QuotedTableName())
 	} else {
 		// db error
-		c.logger.Errorc(ctx, "mysql_error:%v, schema[%v], sql_desc[%v]", err, schema, fmt.Sprintf("%v", scope.DB().QueryExpr()))
+		c.logger.Errorc(ctx, "mysql_error: schema[%v], sql_desc[%v], err: %v", schema, fmt.Sprintf("%v", scope.DB().QueryExpr()), err)
 		mysqlDBError.Inc(schema, scope.QuotedTableName())
 	}
 }

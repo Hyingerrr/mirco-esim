@@ -9,9 +9,15 @@ import (
 	"golang.org/x/net/context"
 )
 
-func NewTracer(serviceName string, logger log.Logger) opentracing.Tracer {
-	var tracer opentracing.Tracer
+var (
+	tracer opentracing.Tracer
+)
 
+func LoadTracer() opentracing.Tracer {
+	return tracer
+}
+
+func NewTracer(serviceName string, logger log.Logger) opentracing.Tracer {
 	cfg, err := jaegerconfig.FromEnv()
 	if err != nil {
 		logger.Panicf(err.Error())

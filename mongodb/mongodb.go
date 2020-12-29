@@ -6,6 +6,8 @@ import (
 	"sync"
 	"time"
 
+	config2 "github.com/jukylin/esim/core/config"
+
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
 	"github.com/prometheus/client_golang/prometheus"
@@ -29,7 +31,7 @@ var onceClient *Client
 type Client struct {
 	Mgos map[string]*mongo.Client
 
-	conf config.Config
+	conf config2.Config
 
 	logger log.Logger
 
@@ -72,7 +74,7 @@ func NewClient(os ...Option) *Client {
 	return onceClient
 }
 
-func (ClientOptions) WithConf(conf config.Config) Option {
+func (ClientOptions) WithConf(conf config2.Config) Option {
 	return func(m *Client) {
 		m.conf = conf
 	}

@@ -6,6 +6,8 @@ import (
 	"runtime"
 	"time"
 
+	config2 "github.com/jukylin/esim/core/config"
+
 	"github.com/jukylin/esim/config"
 	tracerid "github.com/jukylin/esim/pkg/tracer-id"
 	"github.com/opentracing/opentracing-go"
@@ -20,7 +22,7 @@ type logger struct {
 	log   *zap.Logger
 	debug bool
 	sugar *zap.SugaredLogger
-	conf  config.Config
+	conf  config2.Config
 }
 
 type Field map[string]interface{}
@@ -88,7 +90,7 @@ func NewLogger(options ...Option) Logger {
 	return Log
 }
 
-func (LoggerOptions) WithLoggerConf(conf config.Config) Option {
+func (LoggerOptions) WithLoggerConf(conf config2.Config) Option {
 	return func(l *logger) {
 		l.conf = conf
 	}

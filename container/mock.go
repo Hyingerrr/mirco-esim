@@ -3,21 +3,22 @@ package container
 import (
 	"github.com/google/wire"
 	"github.com/jukylin/esim/config"
+	config2 "github.com/jukylin/esim/core/config"
 	"github.com/jukylin/esim/metrics"
 	"github.com/opentracing/opentracing-go"
 )
 
-func provideMockConf() config.Config {
+func provideMockConf() config2.Config {
 	conf := config.NewMemConfig()
 	conf.Set("debug", true)
 	return conf
 }
 
-func provideMockProme(conf config.Config) *metrics.Prometheus {
+func provideMockProme(conf config2.Config) *metrics.Prometheus {
 	return prometheusFunc(conf, nil)
 }
 
-func provideMockAppName(conf config.Config) string {
+func provideMockAppName(conf config2.Config) string {
 	return "mocktest"
 }
 

@@ -3,6 +3,8 @@ package rocketmq
 import (
 	"sync"
 
+	config2 "github.com/jukylin/esim/core/config"
+
 	mq_http_sdk "github.com/aliyunmq/mq-http-go-sdk"
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
@@ -24,7 +26,7 @@ type MQClient struct {
 
 	logger log.Logger
 
-	conf config.Config
+	conf config2.Config
 }
 
 func NewMQClient(options ...Option) *MQClient {
@@ -88,7 +90,7 @@ type MQClientOptions struct{}
 
 type Option func(*MQClient)
 
-func (MQClientOptions) WithConf(conf config.Config) Option {
+func (MQClientOptions) WithConf(conf config2.Config) Option {
 	return func(mq *MQClient) {
 		mq.conf = conf
 	}

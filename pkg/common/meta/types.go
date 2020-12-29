@@ -1,16 +1,16 @@
-package metadata
+package meta
 
 const (
-	LabelProdCd      = "prodCode"
-	LabelTranCd      = "tranCode"
-	LabelRequestNo   = "requestNo"
-	LabelMerID       = "merId"
-	LabelAppID       = "appId"
-	LabelMethod      = "method"
-	LabelProtocol    = "protocol"
-	LabelEndpoint    = "endpoint"
-	LabelUri         = "uri"
-	LabelServiceName = "service_name"
+	ProdCd      = "prodCode"
+	TranCd      = "tranCode"
+	RequestNo   = "requestNo"
+	MerID       = "merId"
+	AppID       = "appId"
+	Method      = "method"
+	Protocol    = "protocol"
+	Endpoint    = "endpoint"
+	Uri         = "uri"
+	ServiceName = "service_name"
 
 	HTTPProtocol = "restful"
 	RPCProtocol  = "gprc"
