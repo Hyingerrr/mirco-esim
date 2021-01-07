@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	config2 "github.com/jukylin/esim/core/config"
+	"github.com/jukylin/esim/config"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -23,8 +23,8 @@ func TestNewLogger(t *testing.T) {
 	)
 
 	it.NotPanics(func() {
-		options := config2.ViperConfOptions{}
-		conf := config2.NewViperConfig(options.WithConfigType("yaml"),
+		options := config.ViperConfOptions{}
+		conf := config.NewViperConfig(options.WithConfigType("yaml"),
 			options.WithConfFile([]string{"../config/a.yaml"}))
 		conf.Set("debug", false)
 		opt := LoggerOptions{}

@@ -4,8 +4,6 @@ import (
 	"context"
 	"time"
 
-	config2 "github.com/jukylin/esim/core/config"
-
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/opentracing"
@@ -17,7 +15,7 @@ import (
 type MonitorEvent struct {
 	nextEvent MgoEvent
 
-	conf config2.Config
+	conf config.Config
 
 	logger log.Logger
 
@@ -56,7 +54,7 @@ func NewMonitorEvent(options ...EventOption) MgoEvent {
 	return m
 }
 
-func (MonitorEventOptions) WithConf(conf config2.Config) EventOption {
+func (MonitorEventOptions) WithConf(conf config.Config) EventOption {
 	return func(m *MonitorEvent) {
 		m.conf = conf
 	}

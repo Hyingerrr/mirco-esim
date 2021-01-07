@@ -5,8 +5,6 @@ import (
 	"database/sql"
 	"time"
 
-	config2 "github.com/jukylin/esim/core/config"
-
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/opentracing"
@@ -21,7 +19,7 @@ type MonitorProxy struct {
 
 	tracer opentracing2.Tracer
 
-	conf config2.Config
+	conf config.Config
 
 	logger log.Logger
 
@@ -60,7 +58,7 @@ func NewMonitorProxy(options ...MonitorProxyOption) *MonitorProxy {
 	return MonitorProxy
 }
 
-func (MonitorProxyOptions) WithConf(conf config2.Config) MonitorProxyOption {
+func (MonitorProxyOptions) WithConf(conf config.Config) MonitorProxyOption {
 	return func(r *MonitorProxy) {
 		r.conf = conf
 	}

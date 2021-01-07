@@ -7,8 +7,6 @@ import (
 	"sync"
 	"time"
 
-	config2 "github.com/jukylin/esim/core/config"
-
 	_ "github.com/go-sql-driver/mysql"
 
 	"github.com/jinzhu/gorm"
@@ -28,7 +26,7 @@ type Client struct {
 
 	proxy []func() interface{}
 
-	conf config2.Config
+	conf config.Config
 
 	logger log.Logger
 
@@ -82,7 +80,7 @@ func NewClient(options ...Option) *Client {
 	return onceClient
 }
 
-func (ClientOptions) WithConf(conf config2.Config) Option {
+func (ClientOptions) WithConf(conf config.Config) Option {
 	return func(m *Client) {
 		m.conf = conf
 	}

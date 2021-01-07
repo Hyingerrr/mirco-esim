@@ -6,8 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/jukylin/esim/log"
 )
 
 func CreateFile(file string) (bool, error) {
@@ -176,8 +174,6 @@ func EsimBackUpFile(backFile string) error {
 		return err
 	}
 
-	log.Log.Infof("%s backup to %s", relativePath, backUpPath)
-
 	return nil
 }
 
@@ -224,8 +220,6 @@ func EsimRecoverFile(recoverFile string) error {
 	if err != nil {
 		return err
 	}
-
-	log.Log.Infof("%s recover success", recoverFile)
 
 	return nil
 }

@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	config2 "github.com/jukylin/esim/core/config"
+	"github.com/jukylin/esim/config"
 
 	"github.com/jukylin/esim/pkg/hepler"
 
@@ -20,8 +20,8 @@ func TestWXAlarm_SendMessage(t *testing.T) {
 		c   *WXAlarm
 	)
 
-	options := config2.ViperConfOptions{}
-	conf := config2.NewViperConfig(options.WithConfigType("yaml"),
+	options := config.ViperConfOptions{}
+	conf := config.NewViperConfig(options.WithConfigType("yaml"),
 		options.WithConfFile([]string{"../../config/a.yaml"}))
 
 	it.NotPanics(func() {

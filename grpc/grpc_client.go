@@ -3,8 +3,6 @@ package grpc
 import (
 	"time"
 
-	config2 "github.com/jukylin/esim/core/config"
-
 	"github.com/davecgh/go-spew/spew"
 	ggp "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
@@ -35,7 +33,7 @@ type ClientOptions struct {
 
 	logger log.Logger
 
-	conf config2.Config
+	conf config.Config
 
 	opts []grpc.DialOption
 }
@@ -112,7 +110,7 @@ func NewClientOptions(options ...ClientOptional) *ClientOptions {
 	return clientOptions
 }
 
-func (ClientOptionals) WithConf(conf config2.Config) ClientOptional {
+func (ClientOptionals) WithConf(conf config.Config) ClientOptional {
 	return func(g *ClientOptions) {
 		g.conf = conf
 	}

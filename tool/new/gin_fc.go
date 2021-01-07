@@ -110,34 +110,17 @@ type GinServer struct{
 }
 
 func NewGinServer(app *{{.PackageName}}.App) *GinServer {
-	httpport := app.Conf.GetString("httpport")
-
-	in := strings.Index(httpport, ":")
+	port := app.Conf.GetString("httpport")
+	in := strings.Index(port, ":")
 	if in < 0 {
-		httpport = ":"+httpport
+		port = ":"+port
 	}
 
-	if app.Conf.GetString("runmode") != "pro"{
-		gin.SetMode(gin.DebugMode)
-	}else{
-		gin.SetMode(gin.ReleaseMode)
-	}
-
-	en := gin.Default()
-
-	if app.Conf.GetBool("http_tracer"){
-		en.Use(middleware.GinTracer(app.Tracer))
-	}
-
-	if app.Conf.GetBool("http_metrics") {
-		en.Use(middleware.GinMonitor())
-	}
-
-	en.Use(middleware.GinTracerID())
+	rGin := rest.NewGinEngine(rest.WithConf(app.Conf), rest.WithLogger(app.Logger))
 
 	server := &GinServer{
-		en : en,
-		addr : httpport,
+		en : rGin.Gine(),
+		addr : port,
 		logger: app.Logger,
 		app: app,
 	}

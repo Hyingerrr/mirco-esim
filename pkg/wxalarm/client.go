@@ -10,15 +10,13 @@ import (
 	"strings"
 	"time"
 
-	config2 "github.com/jukylin/esim/core/config"
-
 	"github.com/jukylin/esim/log"
 
 	"github.com/jukylin/esim/config"
 )
 
 type WXAlarm struct {
-	conf   config2.Config
+	conf   config.Config
 	logger log.Logger
 	config Config
 }
@@ -40,7 +38,7 @@ func New(opts ...Option) *WXAlarm {
 	return wx
 }
 
-func WithConf(conf config2.Config) Option {
+func WithConf(conf config.Config) Option {
 	return func(wx *WXAlarm) {
 		wx.conf = conf
 	}

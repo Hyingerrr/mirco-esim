@@ -7,10 +7,10 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jukylin/esim/pkg/common/meta"
+	"github.com/jukylin/esim/core/meta"
 )
 
-func GinMetaDataToCtx() gin.HandlerFunc {
+func MetaDataCtx() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var metadata = new(meta.CommonParams)
 		reqBuf, err := c.GetRawData()

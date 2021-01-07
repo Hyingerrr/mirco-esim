@@ -4,8 +4,6 @@ import (
 	"net/http"
 	"time"
 
-	config2 "github.com/jukylin/esim/core/config"
-
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/opentracing"
@@ -20,7 +18,7 @@ type MonitorProxy struct {
 
 	logger log.Logger
 
-	conf config2.Config
+	conf config.Config
 
 	// use nethttp.Tracer
 	tracer opentracing2.Tracer
@@ -64,7 +62,7 @@ func NewMonitorProxy(options ...MonitorProxyOption) *MonitorProxy {
 	return MonitorProxy
 }
 
-func (MonitorProxyOptions) WithConf(conf config2.Config) MonitorProxyOption {
+func (MonitorProxyOptions) WithConf(conf config.Config) MonitorProxyOption {
 	return func(pt *MonitorProxy) {
 		pt.conf = conf
 	}
