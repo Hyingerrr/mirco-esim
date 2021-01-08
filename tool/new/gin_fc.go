@@ -93,6 +93,7 @@ import (
 	"{{.ProPath}}{{.ServerName}}/internal/transports/http/routers"
 	middleware "github.com/jukylin/esim/middle-ware"
 	"github.com/jukylin/esim/log"
+	"github.com/jukylin/esim/rest"
 	"{{.ProPath}}{{.ServerName}}/internal/transports/http/controllers"
 	{{.PackageName}} "{{.ProPath}}{{.ServerName}}/internal"
 )

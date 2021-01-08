@@ -5,7 +5,7 @@ var (
 		FileName: "conf.yaml",
 		Dir:      "conf",
 		Content: `
-runmode : '${ENV}'
+runmode : 'dev'
 appname : {{.ServerName}}
 
 #HTTP 服务
