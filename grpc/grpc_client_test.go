@@ -7,12 +7,30 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jukylin/esim/tool/protoc/helloworld"
+
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 	pb "google.golang.org/grpc/examples/helloworld/helloworld"
 	"google.golang.org/grpc/reflection"
+)
+
+const (
+	address = "0.0.0.0"
+
+	port = 50051
+
+	isTest = "is test"
+
+	callPanic = "call_panic"
+
+	callNil = "call_nil"
+
+	callPanicArr = "callPanciArr"
+
+	esim = "esim"
 )
 
 var (
@@ -65,11 +83,11 @@ func TestMain(m *testing.M) {
 			}),
 		))
 
-	pb.RegisterGreeterServer(svr.Server, &server{})
+	pb.RegisterGreeterServer(svr.server, &server{})
 	// Register reflection service on gRPC server.
-	reflection.Register(svr.Server)
+	reflection.Register(svr.server)
 	go func() {
-		if err := svr.Server.Serve(lis); err != nil {
+		if err := svr.server.Serve(lis); err != nil {
 			logger.Fatalf("failed to serve: %v", err)
 		}
 	}()
@@ -141,8 +159,28 @@ func TestSlowClient(t *testing.T) {
 	}
 }
 
+func panicResp() grpc.UnaryServerInterceptor {
+	return func(
+		ctx context.Context,
+		req interface{},
+		info *grpc.UnaryServerInfo,
+		handler grpc.UnaryHandler,
+	) (resp interface{}, err error) {
+		if req.(*helloworld.HelloRequest).Name == callPanic {
+			panic(isTest)
+		} else if req.(*helloworld.HelloRequest).Name == callPanicArr {
+			var arr [1]string
+			arr[0] = isTest
+			panic(arr)
+		}
+		resp, err = handler(ctx, req)
+
+		return resp, err
+	}
+}
+
 func TestServerPanic(t *testing.T) {
-	svr.unaryServerInterceptors = append(svr.unaryServerInterceptors, panicResp())
+	svr.interceptors = append(svr.interceptors, panicResp())
 
 	memConfig := config.NewMemConfig()
 	memConfig.Set("debug", true)

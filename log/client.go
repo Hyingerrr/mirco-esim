@@ -84,8 +84,15 @@ func NewLogger(options ...Option) Logger {
 
 	l.log = zap.New(zapcore.NewTee(core...), opts...)
 	l.sugar = l.log.Sugar()
-	Log = l
-	return Log
+	setInstance(l)
+	return _log
+}
+
+func setInstance(l *logger) {
+	if _log != nil {
+		return
+	}
+	_log = l
 }
 
 func (LoggerOptions) WithLoggerConf(conf config.Config) Option {

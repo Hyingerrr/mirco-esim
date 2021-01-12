@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	filedir "github.com/jukylin/esim/pkg/file-dir"
@@ -13,9 +14,9 @@ import (
 	"github.com/spf13/viper"
 )
 
-var globalConf *viperConf
-
 type viperConf struct {
+	once sync.Once
+
 	*viper.Viper
 
 	configType string
@@ -26,10 +27,6 @@ type viperConf struct {
 type ViperConfOptions struct{}
 
 type Option func(c *viperConf)
-
-func LoadConf() *viperConf {
-	return globalConf
-}
 
 func NewViperConfig(options ...Option) Config {
 	c := &viperConf{}
@@ -78,8 +75,15 @@ func NewViperConfig(options ...Option) Config {
 		}
 	}
 	c.Viper = v
-	globalConf = c
+	setInstance(c)
 	return c
+}
+
+func setInstance(c *viperConf) {
+	if _conf != nil {
+		return
+	}
+	_conf = c
 }
 
 func (ViperConfOptions) WithConfigType(configType string) Option {

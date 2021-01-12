@@ -43,43 +43,43 @@ type ClientOptional func(c *ClientOptions)
 type ClientOptionals struct{}
 
 func NewClientOptions(options ...ClientOptional) *ClientOptions {
-	clientOptions := &ClientOptions{}
+	co := &ClientOptions{}
 
 	for _, option := range options {
-		option(clientOptions)
+		option(co)
 	}
 
-	if clientOptions.logger == nil {
-		clientOptions.logger = log.NewLogger()
+	if co.logger == nil {
+		co.logger = log.NewLogger()
 	}
 
-	if clientOptions.conf == nil {
-		clientOptions.conf = config.NewMemConfig()
+	if co.conf == nil {
+		co.conf = config.NewMemConfig()
 	}
 
-	if clientOptions.tracer == nil {
-		clientOptions.tracer = opentracing.NewTracer("grpc_client", clientOptions.logger)
+	if co.tracer == nil {
+		co.tracer = opentracing.NewTracer("grpc_client", co.logger)
 	}
 
-	if clientOptions.clientMetrics == nil {
+	if co.clientMetrics == nil {
 		ggp.EnableClientHandlingTimeHistogram(ggp.WithHistogramBuckets(prometheus.DefBuckets))
-		clientOptions.clientMetrics = ggp.DefaultClientMetrics
+		co.clientMetrics = ggp.DefaultClientMetrics
 	}
 
 	keepAliveClient := keepalive.ClientParameters{}
-	ClientKpTime := clientOptions.conf.GetInt("grpc_client_kp_time")
+	ClientKpTime := co.conf.GetInt("grpc_client_kp_time")
 	if ClientKpTime == 0 {
 		ClientKpTime = 60
 	}
 	keepAliveClient.Time = time.Duration(ClientKpTime) * time.Second
 
-	ClientKpTimeOut := clientOptions.conf.GetInt("grpc_client_kp_time_out")
+	ClientKpTimeOut := co.conf.GetInt("grpc_client_kp_time_out")
 	if ClientKpTimeOut == 0 {
 		ClientKpTimeOut = 5
 	}
 	keepAliveClient.Timeout = time.Duration(ClientKpTimeOut) * time.Second
 
-	ClientPermitWithoutStream := clientOptions.conf.GetBool("grpc_client_permit_without_stream")
+	ClientPermitWithoutStream := co.conf.GetBool("grpc_client_permit_without_stream")
 	keepAliveClient.PermitWithoutStream = ClientPermitWithoutStream
 
 	opts := []grpc.DialOption{
@@ -87,27 +87,29 @@ func NewClientOptions(options ...ClientOptional) *ClientOptions {
 		grpc.WithKeepaliveParams(keepAliveClient),
 	}
 
-	if clientOptions.conf.GetBool("grpc_client_tracer") {
-		tracerInterceptor := otgrpc.OpenTracingClientInterceptor(clientOptions.tracer)
+	opts = append(opts, grpc.WithChainUnaryInterceptor(co.metaClientData()))
+
+	if co.conf.GetBool("grpc_client_tracer") {
+		tracerInterceptor := otgrpc.OpenTracingClientInterceptor(co.tracer)
 		opts = append(opts, grpc.WithChainUnaryInterceptor(tracerInterceptor))
 	}
 
-	if clientOptions.conf.GetBool("grpc_client_metrics") {
+	if co.conf.GetBool("grpc_client_metrics") {
 		opts = append(opts, grpc.WithChainUnaryInterceptor(
-			clientOptions.clientMetrics.UnaryClientInterceptor()))
+			co.clientMetrics.UnaryClientInterceptor()))
 	}
 
-	if clientOptions.conf.GetBool("grpc_client_check_slow") {
-		opts = append(opts, grpc.WithChainUnaryInterceptor(clientOptions.checkClientSlow()))
+	if co.conf.GetBool("grpc_client_check_slow") {
+		opts = append(opts, grpc.WithChainUnaryInterceptor(co.checkClientSlow()))
 	}
 
-	if clientOptions.conf.GetBool("grpc_client_debug") {
-		opts = append(opts, grpc.WithChainUnaryInterceptor(clientOptions.clientDebug()))
+	if co.conf.GetBool("grpc_client_debug") {
+		opts = append(opts, grpc.WithChainUnaryInterceptor(co.clientDebug()))
 	}
 
-	clientOptions.opts = append(opts, clientOptions.opts...)
+	co.opts = append(opts, co.opts...)
 
-	return clientOptions
+	return co
 }
 
 func (ClientOptionals) WithConf(conf config.Config) ClientOptional {
@@ -143,11 +145,11 @@ func (ClientOptionals) WithDialOptions(options ...grpc.DialOption) ClientOptiona
 // NewClient create Client for business.
 // clientOptions clientOptions can not nil.
 func NewClient(clientOptions *ClientOptions) *Client {
-	Client := &Client{}
+	c := &Client{}
 
-	Client.clientOpts = clientOptions
+	c.clientOpts = clientOptions
 
-	return Client
+	return c
 }
 
 func (gc *Client) DialContext(ctx context.Context, target string) *grpc.ClientConn {

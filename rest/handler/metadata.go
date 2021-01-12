@@ -6,11 +6,13 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/jukylin/esim/config"
+
 	"github.com/gin-gonic/gin"
 	"github.com/jukylin/esim/core/meta"
 )
 
-func MetaDataCtx() gin.HandlerFunc {
+func SetMetadata() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var metadata = new(meta.CommonParams)
 		reqBuf, err := c.GetRawData()
@@ -34,7 +36,7 @@ func MetaDataCtx() gin.HandlerFunc {
 			meta.Method:      c.Request.Method,
 			meta.Protocol:    meta.HTTPProtocol,
 			meta.Uri:         c.Request.URL.Path,
-			meta.ServiceName: "appname",
+			meta.ServiceName: config.GetString("appname"),
 		}
 		rCtx := meta.NewContext(c.Request.Context(), md)
 		c.Request = c.Request.WithContext(rCtx)

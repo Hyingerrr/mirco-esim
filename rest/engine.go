@@ -63,7 +63,7 @@ func (en *engine) bindMiddleware() {
 
 	en.gin.Use(handler.TracerID(), handler.Recover(en.logger))
 
-	en.gin.Use(handler.MetaDataCtx())
+	en.gin.Use(handler.SetMetadata())
 }
 
 func (en *engine) Gine() *gin.Engine {

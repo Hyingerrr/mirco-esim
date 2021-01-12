@@ -9,8 +9,13 @@ const (
 	Method      = "method"
 	Protocol    = "protocol"
 	Endpoint    = "endpoint"
-	Uri         = "uri"
-	ServiceName = "service_name"
+	Uri         = "uri" // method
+	ServiceName = "serviceName"
+	TermNO      = "termNo"
+	TranSeq     = "tranSeq"
+	SrcSysId    = "srcSysId"
+	DstSysId    = "dstSysId"
+	TraceID     = "traceId"
 
 	HTTPProtocol = "restful"
 	RPCProtocol  = "gprc"
@@ -54,4 +59,47 @@ func (cp CommonParams) ParseMerID() string {
 	}
 
 	return cp.MerID
+}
+
+type CommonHeader struct {
+	Head *InternalHeader `json:"head"`
+}
+
+type InternalHeader struct {
+	AppId    string `json:"app_id"`     // 机构号
+	TermNo   string `json:"term_no"`    // 终端号
+	MerchNo  string `json:"merch_no"`   // 商户号
+	MerID    string `json:"merId"`      // 商户号
+	DstSysId string `json:"dst_sys_id"` // 服务方子系统id
+	SrcSysId string `json:"src_sys_id"` // 调用方子系统id
+	ProdCd   string `json:"prod_cd"`    // 产品码
+	ProdCode string `json:"prodCode"`   // 产品码
+	TranCd   string `json:"tran_cd"`    // 交易码
+	TranCode string `json:"tranCode"`   // 交易码
+	TranSeq  string `json:"tran_seq"`   // 流水号， 即订单
+	TraceId  string `json:"trace_id"`   // 系统跟踪号
+}
+
+func (head InternalHeader) ParseMchNo() string {
+	if head.MerchNo != "" {
+		return head.MerchNo
+	}
+
+	return head.MerID
+}
+
+func (head InternalHeader) ParseProdCd() string {
+	if head.ProdCode != "" {
+		return head.ProdCode
+	}
+
+	return head.ProdCd
+}
+
+func (head InternalHeader) ParseTranCd() string {
+	if head.TranCode != "" {
+		return head.TranCode
+	}
+
+	return head.TranCd
 }
