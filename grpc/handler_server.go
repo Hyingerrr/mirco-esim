@@ -24,9 +24,6 @@ import (
 
 var checker = validate.NewValidateRepo()
 
-// ------------------------------------------------------ //
-// --------------------  server  ----------------------- //
-// ------------------------------------------------------ //
 func (gs *Server) metaServerData() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 		var (
@@ -44,21 +41,20 @@ func (gs *Server) metaServerData() grpc.UnaryServerInterceptor {
 		ctx, cancel = context.WithTimeout(ctx, timeout*time.Millisecond)
 		defer cancel()
 
-		cmd := meta.MD{}
-		if md, ok := metadata.FromIncomingContext(ctx); ok {
-			for k, v := range md {
-				if _, o := cmd[k]; !o {
-					cmd[k] = v[0]
+		md := meta.MD{}
+		if mdCtx, ok := metadata.FromIncomingContext(ctx); ok {
+			for k, v := range mdCtx {
+				if _, o := md[k]; !o {
+					md[k] = v[0]
 				}
 			}
 		}
-
-		ctx = meta.NewContext(ctx, cmd)
+		ctx = meta.NewContext(ctx, md)
 
 		// request logger
 		if gs.config.Debug {
 			logx.Infoc(ctx, "Get_Request_Params: method[%v], server[%v], ctxParams:%+v, body:%+v",
-				info.FullMethod, info.Server, cmd.Marshal(), req)
+				info.FullMethod, info.Server, md.Marshal(), req)
 		}
 
 		// monitor
@@ -66,19 +62,17 @@ func (gs *Server) metaServerData() grpc.UnaryServerInterceptor {
 			_serverGRPCReqQPS.Inc(meta.String(ctx, meta.ServiceName), info.FullMethod, meta.String(ctx, meta.AppID))
 		}
 
-		fmt.Println(23)
 		resp, err = handler(ctx, req)
-		fmt.Println(24)
-		duration := time.Since(start)
+
 		// response logger
 		if gs.config.Debug {
 			logx.Infoc(ctx, "Send_Response_Params: method[%v], server[%v], cost[%v], resp_params:%+v",
-				info.FullMethod, info.Server, duration.String(), spew.Sdump(resp))
+				info.FullMethod, info.Server, time.Since(start).String(), spew.Sdump(resp))
 		}
 
 		// monitor
 		if gs.config.Metrics {
-			_serverGRPCReqDuration.Observe(float64(duration/time.Millisecond),
+			_serverGRPCReqDuration.Observe(float64(time.Since(start)/time.Millisecond),
 				meta.String(ctx, meta.ServiceName), info.FullMethod, meta.String(ctx, meta.AppID))
 		}
 
@@ -100,10 +94,7 @@ func (gs *Server) recovery() grpc.UnaryServerInterceptor {
 				err = recoverFrom(r, info.FullMethod)
 			}
 		}()
-
-		fmt.Println(21)
 		resp, err = handler(ctx, req)
-		fmt.Println(22)
 		return
 	}
 }
@@ -117,9 +108,7 @@ func (gs *Server) tracerID() grpc.UnaryServerInterceptor {
 		if sp == nil {
 			ctx = context.WithValue(ctx, tracerid.ActiveEsimKey, tracerID())
 		}
-		fmt.Println(27)
 		resp, err = handler(ctx, req)
-		fmt.Println(28)
 		return resp, err
 	}
 }
@@ -130,9 +119,7 @@ func (gs *Server) validate() grpc.UnaryServerInterceptor {
 			err = status.Error(codes.InvalidArgument, err.Error())
 			return
 		}
-		fmt.Println(25)
 		resp, err = handler(ctx, req)
-		fmt.Println(26)
 		return
 	}
 }

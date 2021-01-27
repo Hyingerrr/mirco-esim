@@ -1,23 +1,24 @@
 package meta
 
 const (
-	ProdCd      = "prodCode"
-	TranCd      = "tranCode"
-	RequestNo   = "requestNo"
-	MerID       = "merId"
-	AppID       = "appId"
+	// 兼容http和grpc中的metadata，所以小写
+	ProdCd      = "prodcode"
+	TranCd      = "trancode"
+	RequestNo   = "requestno"
+	MerID       = "merid"
+	AppID       = "appid"
 	Method      = "method"
 	Protocol    = "protocol"
 	Endpoint    = "endpoint"
 	Uri         = "uri" // method
-	ServiceName = "serviceName"
-	TermNO      = "termNo"
-	TranSeq     = "tranSeq"
-	SrcSysId    = "srcSysId"
-	DstSysId    = "dstSysId"
-	TraceID     = "traceId"
+	ServiceName = "servicename"
+	TermNO      = "termno"
+	TranSeq     = "transeq"
+	SrcSysId    = "srcsysid"
+	DstSysId    = "dstsysid"
+	TraceID     = "traceid"
 
-	StatusCode = "statusCode"
+	StatusCode = "statuscode"
 
 	HTTPProtocol = "restful"
 	RPCProtocol  = "gprc"

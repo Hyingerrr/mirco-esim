@@ -46,7 +46,7 @@ func String(ctx context.Context, key string) string {
 		return ""
 	}
 
-	str, has := md[strings.ToLower(key)].(string)
+	str, has := md[key].(string)
 	if !has {
 		return ""
 	}
@@ -59,7 +59,7 @@ func Int64(ctx context.Context, key string) int64 {
 		return 0
 	}
 
-	i64, has := md[strings.ToLower(key)].(int64)
+	i64, has := md[key].(int64)
 	if !has {
 		return 0
 	}

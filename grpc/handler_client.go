@@ -20,44 +20,15 @@ import (
 	"google.golang.org/grpc"
 )
 
-// ------------------------------------------------------ //
-// --------------------   client  ----------------------- //
-// ------------------------------------------------------ //
-func (gc *ClientOptions) metaClientData() grpc.UnaryClientInterceptor {
-	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-		cmd, err := setClientMetadata(req)
-		if err != nil {
-			return handlerErr(err)
-		}
-
-		logx.Infoc(ctx, "Set_Client_Metadata: %v", cmd)
-
-		ctx = metadata.NewOutgoingContext(ctx, cmd)
-
-		if err = invoker(ctx, method, req, reply, cc, opts...); err != nil {
-			return handlerErr(err)
-		}
-
-		return nil
-	}
-}
-
 func (gc *ClientOptions) handleClient() grpc.UnaryClientInterceptor {
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-		var (
-			cancel context.CancelFunc
-			beg    = time.Now()
-			codes  = "200"
-		)
-
-		// request params
-		if gc.config.Debug {
-			logx.Infoc(ctx, "GRPC_Send_RequestParams: method[%v], target[%v], params:%+v",
-				method, cc.Target(), spew.Sdump(req))
-		}
+		var beg = time.Now()
+		var codes = "200"
 
 		// request timeout ctrl
+		// timeout ctx must before the all
 		var timeOpt *TimeoutCallOption
+		var cancel context.CancelFunc
 		for _, opt := range opts {
 			var ok bool
 			timeOpt, ok = opt.(*TimeoutCallOption)
@@ -72,11 +43,51 @@ func (gc *ClientOptions) handleClient() grpc.UnaryClientInterceptor {
 		}
 		defer cancel()
 
-		err := invoker(ctx, method, req, reply, cc, opts...)
+		// set metadata
+		md, err := setClientMetadata(req)
 		if err != nil {
-			err = handlerErr(err)
 			codes = "406"
+			return handlerErr(err)
 		}
+
+		// merge with old matadata if exists
+		if oldmd, ok := metadata.FromOutgoingContext(ctx); ok {
+			md = metadata.Join(md, oldmd)
+		}
+		ctx = metadata.NewOutgoingContext(ctx, md)
+
+		logx.Infoc(ctx, "Set_Client_Metadata: %v", md)
+
+		err = invoker(ctx, method, req, reply, cc, opts...)
+
+		// metrics
+		if gc.config.Metrics {
+			var serverName, appId string
+			if sn := md.Get(meta.ServiceName); len(sn) > 0 {
+				serverName = sn[0]
+			}
+			if ai := md.Get(meta.AppID); len(ai) > 0 {
+				appId = ai[0]
+			}
+			_clientGRPCReqDuration.Observe(float64(time.Since(beg)/time.Millisecond), serverName, method, appId)
+			_clientGRPCReqQPS.Inc(serverName, method, appId, codes)
+		}
+
+		return handlerErr(err)
+	}
+}
+
+func (gc *ClientOptions) addClientDebug() grpc.UnaryClientInterceptor {
+	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+		beg := time.Now()
+
+		// request params
+		if gc.config.Debug {
+			logx.Infoc(ctx, "GRPC_Send_RequestParams: method[%v], target[%v], params:%+v",
+				method, cc.Target(), spew.Sdump(req))
+		}
+
+		err := invoker(ctx, method, req, reply, cc, opts...)
 
 		// check slow
 		if gc.config.SlowTime != 0 {
@@ -85,21 +96,13 @@ func (gc *ClientOptions) handleClient() grpc.UnaryClientInterceptor {
 			}
 		}
 
-		// metrics
-		if gc.config.Metrics {
-			serverName := meta.String(ctx, meta.ServiceName)
-			appId := meta.String(ctx, meta.AppID)
-			_clientGRPCReqDuration.Observe(float64(time.Since(beg)/time.Millisecond), serverName, method, appId)
-			_clientGRPCReqQPS.Inc(serverName, method, appId, codes)
-		}
-
 		// response params
 		if gc.config.Debug {
 			logx.Infoc(ctx, "GRPC_Get_ResponseParams: method[%v], target[%v], params:%+v",
 				method, cc.Target(), spew.Sdump(reply))
 		}
 
-		return err
+		return handlerErr(err)
 	}
 }
 
