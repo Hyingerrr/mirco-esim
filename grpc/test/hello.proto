@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package testproto;
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+
+option go_package = ".;pbapi";
+option (gogoproto.goproto_getters_all) = false;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.goproto_registration) = true;
+
+service helloServer {
+  rpc SayGoodbye (HelloRequest) returns (HelloResponse) {};
+}
+
+message HelloRequest {
+    InternalHeader head = 1;
+    string name = 2 [(gogoproto.jsontag) = "name1", (gogoproto.moretags) = "validate:\"required\""];
+    int32 age = 3 [(gogoproto.moretags) = "validate:\"min=0\""];
+    string address = 4;
+}
+
+message HelloResponse {
+    InternalResponse head = 1;
+    string name_en = 2;
+    int32 age_en = 3;
+}
+
+message InternalHeader {
+  string app_id = 1; // 机构号
+  string term_no = 2; // 终端号
+  string merch_no = 3; // 商户号
+  string dst_sys_id = 4; // 服务方子系统id
+  string src_sys_id = 5; // 调用方子系统id
+  string prod_cd = 6; // 产品码
+  string tran_cd = 7; // 交易码
+  string tran_seq = 8; // 流水号， 即订单
+  string trace_id = 9; // 系统跟踪号
+}
+
+message InternalResponse {
+  string resp_code = 1;
+  string resp_msg = 2;
+  string tran_cd = 3; // 交易码
+  string tran_seq = 4; // 流水号
+  string trade_no = 5; // 交易号
+  string trace_id = 6;
+}

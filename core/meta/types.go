@@ -17,6 +17,8 @@ const (
 	DstSysId    = "dstSysId"
 	TraceID     = "traceId"
 
+	StatusCode = "statusCode"
+
 	HTTPProtocol = "restful"
 	RPCProtocol  = "gprc"
 )

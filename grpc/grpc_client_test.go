@@ -2,160 +2,111 @@ package grpc
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"os"
 	"testing"
 	"time"
 
-	"github.com/jukylin/esim/tool/protoc/helloworld"
+	"github.com/jukylin/esim/grpc/test"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
-	pb "google.golang.org/grpc/examples/helloworld/helloworld"
-	"google.golang.org/grpc/reflection"
 )
 
 const (
-	address = "0.0.0.0"
-
-	port = 50051
-
-	isTest = "is test"
-
-	callPanic = "call_panic"
-
-	callNil = "call_nil"
-
+	address      = "0.0.0.0"
+	isTest       = "is test"
+	callPanic    = "call_panic"
 	callPanicArr = "callPanciArr"
-
-	esim = "esim"
+	esim         = "esim"
 )
 
 var (
-	logger log.Logger
+	logger    log.Logger
+	tcpAddr   = &net.TCPAddr{IP: net.ParseIP(address).To4(), Port: 50250}
+	memConfig config.Config
 
-	svr *Server
-
-	tcpAddr = &net.TCPAddr{IP: net.ParseIP(address).To4(), Port: port}
+	clientOpt *ClientOptions
 )
 
-// server is used to implement helloworld.GreeterServer.
 type server struct{}
 
-// SayHello implements helloworld.GreeterServer.
-func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
-	return &pb.HelloReply{Message: "Hello " + in.Name}, nil
+func (s *server) SayGoodbye(ctx context.Context, in *test.HelloRequest) (*test.HelloResponse, error) {
+	resp := &test.HelloResponse{
+		Head:   &test.InternalResponse{RespCode: "0000", RespMsg: "SUCCESS"},
+		NameEn: in.Name + "_en",
+		AgeEn:  in.Age,
+	}
+	return resp, nil
 }
 
 func TestMain(m *testing.M) {
 	logger = log.NewLogger()
+	options := config.ViperConfOptions{}
+	memConfig = config.NewViperConfig(options.WithConfigType("yaml"),
+		options.WithConfFile([]string{"../config/a.yaml", "../config/b.yaml"}))
+	opts := ClientOptionals{}
+	clientOpt = NewClientOptions(
+		opts.WithDialOptions())
 
-	lis, err := net.Listen(tcpAddr.Network(), tcpAddr.String())
-	if err != nil {
-		logger.Fatalf("Failed to listen: %v", err)
-	}
+	svr := NewServer()
 
-	serverOptions := ServerOptions{}
-	memConfig := config.NewMemConfig()
-	memConfig.Set("debug", true)
-	memConfig.Set("grpc_server_debug", true)
+	test.RegisterHelloServerServer(svr.server, &server{})
 
-	svr = NewServer("test",
-		serverOptions.WithServerLogger(logger),
-		serverOptions.WithServerConf(memConfig),
-		serverOptions.WithUnarySrvItcp(
-			ServerStubs(func(ctx context.Context, req interface{},
-				info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
-				if req.(*pb.HelloRequest).Name == callPanic {
-					panic(isTest)
-				} else if req.(*pb.HelloRequest).Name == callPanicArr {
-					var arr [1]string
-					arr[0] = isTest
-					panic(arr)
-				} else if req.(*pb.HelloRequest).Name == callNil {
-					return nil, err
-				}
-				resp, err = handler(ctx, req)
-
-				return resp, err
-			}),
-		))
-
-	pb.RegisterGreeterServer(svr.server, &server{})
-	// Register reflection service on gRPC server.
-	reflection.Register(svr.server)
-	go func() {
-		if err := svr.server.Serve(lis); err != nil {
-			logger.Fatalf("failed to serve: %v", err)
-		}
-	}()
+	svr.Use(panicResp())
+	svr.Start()
 
 	code := m.Run()
 
 	os.Exit(code)
 }
 
-func TestNewGrpcClient(t *testing.T) {
-	memConfig := config.NewMemConfig()
-	memConfig.Set("debug", true)
-	memConfig.Set("grpc_client_debug", true)
-
-	clientOptional := ClientOptionals{}
-	clientOptions := NewClientOptions(
-		clientOptional.WithLogger(logger),
-		clientOptional.WithConf(memConfig),
-	)
-
+func TestGrpcClient(t *testing.T) {
 	ctx := context.Background()
-	client := NewClient(clientOptions)
-	conn := client.DialContext(ctx, tcpAddr.String())
+	conn := NewClient(clientOpt).DialContext(ctx, tcpAddr.String())
 
 	defer conn.Close()
-	c := pb.NewGreeterClient(conn)
+	c := test.NewHelloServerClient(conn)
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-	r, err := c.SayHello(ctx, &pb.HelloRequest{Name: esim})
+	r, err := c.SayGoodbye(ctx, &test.HelloRequest{Head: &test.InternalHeader{
+		AppId:   "QY0002",
+		TermNo:  "",
+		MerchNo: "Qy08032324ccs",
+		TraceId: "x1x2x3x4x5",
+	}, Name: esim, Age: -1})
 	if err != nil {
+		statusErr, ok := status.FromError(err)
+		if ok {
+			if statusErr.Code() == codes.DeadlineExceeded {
+				logger.Errorc(ctx, "grpc dial timeout deadline: %v", statusErr.Message())
+			}
+		}
 		logger.Errorf(err.Error())
 	} else {
-		assert.NotEmpty(t, r.Message)
+		assert.NotEmpty(t, r.String())
 	}
 }
 
-func TestSlowClient(t *testing.T) {
-	memConfig := config.NewMemConfig()
-	memConfig.Set("debug", true)
-	memConfig.Set("grpc_client_debug", true)
-	memConfig.Set("grpc_client_check_slow", true)
-	memConfig.Set("grpc_client_slow_time", 10)
-
-	clientOptional := ClientOptionals{}
-	clientOptions := NewClientOptions(
-		clientOptional.WithLogger(logger),
-		clientOptional.WithConf(memConfig),
-		clientOptional.WithDialOptions(
-			grpc.WithBlock(),
-			grpc.WithChainUnaryInterceptor(slowRequest),
-		),
-	)
-
-	ctx := context.Background()
-	client := NewClient(clientOptions)
-	conn := client.DialContext(ctx, tcpAddr.String())
-
-	defer conn.Close()
-	c := pb.NewGreeterClient(conn)
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+func TestSlowClient_TimeOut(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
-	r, err := c.SayHello(ctx, &pb.HelloRequest{Name: esim})
+
+	conn := NewClient(clientOpt).DialContext(ctx, tcpAddr.String())
+	defer conn.Close()
+	c := test.NewHelloServerClient(conn)
+
+	fmt.Println("Start Time: " + time.Now().String())
+	r, err := c.SayGoodbye(ctx, &test.HelloRequest{Name: "HuangYin"}, WithTimeout(10*time.Second))
 	if err != nil {
 		logger.Errorf(err.Error())
 	} else {
-		assert.NotEmpty(t, r.Message)
+		assert.NotEmpty(t, r.NameEn)
 	}
 }
 
@@ -166,9 +117,9 @@ func panicResp() grpc.UnaryServerInterceptor {
 		info *grpc.UnaryServerInfo,
 		handler grpc.UnaryHandler,
 	) (resp interface{}, err error) {
-		if req.(*helloworld.HelloRequest).Name == callPanic {
+		if req.(*test.HelloRequest).Name == callPanic {
 			panic(isTest)
-		} else if req.(*helloworld.HelloRequest).Name == callPanicArr {
+		} else if req.(*test.HelloRequest).Name == callPanicArr {
 			var arr [1]string
 			arr[0] = isTest
 			panic(arr)
@@ -179,92 +130,28 @@ func panicResp() grpc.UnaryServerInterceptor {
 	}
 }
 
-func TestServerPanic(t *testing.T) {
-	svr.interceptors = append(svr.interceptors, panicResp())
-
-	memConfig := config.NewMemConfig()
-	memConfig.Set("debug", true)
-	memConfig.Set("grpc_client_debug", true)
-
-	clientOptional := ClientOptionals{}
-	clientOptions := NewClientOptions(
-		clientOptional.WithLogger(logger),
-		clientOptional.WithConf(memConfig),
-	)
-
+func TestMetaData(t *testing.T) {
 	ctx := context.Background()
-	client := NewClient(clientOptions)
-	conn := client.DialContext(ctx, tcpAddr.String())
+	fmt.Println("Start Time: " + time.Now().String())
+	conn := NewClient(clientOpt).DialContext(ctx, tcpAddr.String())
 
 	defer conn.Close()
-	c := pb.NewGreeterClient(conn)
+	c := test.NewHelloServerClient(conn)
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-	r, err := c.SayHello(ctx, &pb.HelloRequest{Name: callPanic})
-	assert.Error(t, err)
-	assert.Nil(t, r)
-}
-
-func TestServerPanicArr(t *testing.T) {
-	memConfig := config.NewMemConfig()
-	memConfig.Set("debug", true)
-	memConfig.Set("grpc_client_debug", true)
-
-	clientOptional := ClientOptionals{}
-	clientOptions := NewClientOptions(
-		clientOptional.WithLogger(logger),
-		clientOptional.WithConf(memConfig),
-	)
-
-	ctx := context.Background()
-	client := NewClient(clientOptions)
-	conn := client.DialContext(ctx, tcpAddr.String())
-
-	defer conn.Close()
-	c := pb.NewGreeterClient(conn)
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-	r, err := c.SayHello(ctx, &pb.HelloRequest{Name: callPanicArr})
-	assert.Error(t, err)
-	assert.Nil(t, r)
-}
-
-func TestSubsReply(t *testing.T) {
-	memConfig := config.NewMemConfig()
-	memConfig.Set("debug", true)
-	memConfig.Set("grpc_client_debug", true)
-
-	clientOptional := ClientOptionals{}
-	clientOptions := NewClientOptions(
-		clientOptional.WithLogger(logger),
-		clientOptional.WithConf(memConfig),
-		clientOptional.WithDialOptions(
-			grpc.WithChainUnaryInterceptor(ClientStubs(func(ctx context.Context,
-				method string, req, reply interface{}, cc *grpc.ClientConn,
-				invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-				if method == "/helloworld.Greeter/SayHello" {
-					reply.(*pb.HelloReply).Message = esim
-				}
-				return nil
-			})),
-		),
-	)
-
-	ctx := context.Background()
-	client := NewClient(clientOptions)
-	conn := client.DialContext(ctx, tcpAddr.String())
-
-	defer conn.Close()
-	c := pb.NewGreeterClient(conn)
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-	r, err := c.SayHello(ctx, &pb.HelloRequest{Name: esim})
+	r, err := c.SayGoodbye(ctx, &test.HelloRequest{Head: &test.InternalHeader{
+		AppId:    "AppID1",
+		TermNo:   "TermNo1",
+		MerchNo:  "商户A",
+		DstSysId: "",
+		SrcSysId: "SrcB",
+		ProdCd:   "SM101",
+		TranCd:   "MP010",
+		TranSeq:  "dsfsgdsggfhj",
+		TraceId:  "C1c2c3vv44",
+	}, Name: "call_panic1", Age: 30, Address: "上海市"})
 	if err != nil {
 		logger.Errorf(err.Error())
-	} else {
-		assert.Equal(t, esim, r.Message)
 	}
+	assert.Error(t, err)
+	assert.Nil(t, r)
 }

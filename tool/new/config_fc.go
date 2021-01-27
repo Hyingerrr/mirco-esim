@@ -13,16 +13,16 @@ httpport : 8080
 
 #服务端
 grpc_server_tcp : 50055
-grpc_server_kp_time : 60
-grpc_server_kp_time_out : 5
-#链接超时
-grpc_server_conn_time_out : 3
+grpc_server_kp_time : 60 # s
+grpc_server_kp_time_out : 5 # s
+#链接超时 单位：ms
+grpc_server_conn_time_out : 500
 
 #客户端
-grpc_client_kp_time : 60
-grpc_client_kp_time_out : 5
+grpc_client_kp_time : 60 # s
+grpc_client_kp_time_out : 5 # s
 #链接超时 单位：ms
-grpc_client_conn_time_out : 300
+grpc_client_conn_time_out : 500
 grpc_client_permit_without_stream: true
 
 jaeger_disabled: '${JAEGER_DISABLED}'
@@ -68,6 +68,23 @@ redis_conn_time_out : 500
 
 #prometheus http addr
 prometheus_http_addr : 9002
+
+# logger
+log_output: stdout  # 日志位置，file 文件|both 文件和终端|stdout 终端
+log_file: ./logs/{{.ServerName}}.log  # 文件地址，建议写绝对路径
+log_level: INFO   # 日志等级  panic|fatal|error|warn|info|debug
+log_format: json  # 日志格式  json|text
+log_report_caller: false  # 是否显示文件:行号
+log_stack_trace: false  # 是否打印堆栈
+log_max_size: 100   # 单个文件最大size
+log_max_age: 15   # 保留旧文件的最大天数
+log_backup_count: 10  # 保留旧文件的最大个数
+log_compress: true  # 是否压缩/归档旧文件
+
+# 微信报警 配置样例
+wx_web_hook: e0c3df32-547b-4699-a887-67c5ae8ea877  # wx群ID
+wx_retries: 3
+wx_interval: 3
 `,
 	}
 
@@ -86,6 +103,10 @@ grpc_server_tracer : {{.Monitoring}}
 grpc_server_metrics : {{.Monitoring}}
 #启动debug true/false
 grpc_server_debug: {{.Monitoring}}
+# 单位ms handle
+grpc_server_timeout: 5000
+# 启动字段验证
+grpc_server_validate: true
 
 #grpc 客户端
 #开启慢检查 true/false
@@ -98,6 +119,8 @@ grpc_client_tracer : {{.Monitoring}}
 grpc_client_metrics : {{.Monitoring}}
 #启动debug true/false
 grpc_client_debug: {{.Monitoring}}
+# 单位ms handle
+grpc_client_timeout: 5000
 
 #mysql
 #开启慢检查 true/false

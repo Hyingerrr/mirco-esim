@@ -1,2 +1,70 @@
 version : 1.0
 
+
+#grpc 服务端
+#开启慢检查 true/false
+grpc_server_check_slow : true
+#单位: ms
+grpc_server_slow_time : 500
+#开启 tracer true/false
+grpc_server_tracer : false
+#启动metrice true/false
+grpc_server_metrics : true
+#启动debug true/false
+grpc_server_debug: true
+# 单位ms
+grpc_server_timeout: 50000
+# 启动字段验证
+grpc_server_validate: true
+
+#grpc 客户端
+#开启慢检查 true/false
+grpc_client_check_slow : true
+#单位: ms
+grpc_client_slow_time : 500
+#开启 tracer true/false
+grpc_client_tracer : false
+#启动metrice true/false
+grpc_client_metrics : true
+#启动debug true/false
+grpc_client_debug: true
+# 单位ms handle
+grpc_client_timeout: 50000
+
+
+#mysql
+#开启慢检查 true/false
+mysql_check_slow : false
+# 大于 slow_sql_time 为慢sql 单位：ms
+mysql_slow_time : 500
+#开启 tracer true/false
+mysql_tracer : false
+#启动metrice true/false
+mysql_metrics : false
+
+
+# http client
+#开启慢检查 true/false
+http_client_check_slow : false
+#  单位：ms
+http_client_slow_time : 500
+#开启 tracer true/false
+http_client_tracer : false
+#启动metrice true/false
+http_client_metrics : false
+
+# http server
+#开启 tracer true/false
+http_tracer: false
+#启动metrice true/false
+http_metrics: false
+
+#redis
+#开启慢检查 true/false
+redis_check_slow : false
+#慢命令 单位 ms
+redis_slow_time : 50
+#开启 tracer true/false
+redis_tracer : false
+#启动metrice true/false
+redis_metrics : false

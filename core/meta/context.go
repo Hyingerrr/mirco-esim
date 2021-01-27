@@ -1,6 +1,10 @@
 package meta
 
-import "context"
+import (
+	"context"
+	"encoding/json"
+	"strings"
+)
 
 type MD map[string]interface{}
 
@@ -42,7 +46,10 @@ func String(ctx context.Context, key string) string {
 		return ""
 	}
 
-	str, _ := md[key].(string)
+	str, has := md[strings.ToLower(key)].(string)
+	if !has {
+		return ""
+	}
 	return str
 }
 
@@ -52,7 +59,10 @@ func Int64(ctx context.Context, key string) int64 {
 		return 0
 	}
 
-	i64, _ := md[key].(int64)
+	i64, has := md[strings.ToLower(key)].(int64)
+	if !has {
+		return 0
+	}
 	return i64
 }
 
@@ -61,5 +71,10 @@ func Value(ctx context.Context, key string) interface{} {
 	if !ok {
 		return nil
 	}
-	return md[key]
+	return md[strings.ToLower(key)]
+}
+
+func (md MD) Marshal() string {
+	buf, _ := json.Marshal(md)
+	return string(buf)
 }

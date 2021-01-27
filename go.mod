@@ -18,6 +18,7 @@ require (
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/gogap/errors v0.0.0-20200228125012-531a6449b28c
 	github.com/gogap/stack v0.0.0-20150131034635-fef68dddd4f8 // indirect
+	github.com/gogo/protobuf v1.3.1
 	github.com/golang/protobuf v1.4.1
 	github.com/gomodule/redigo v1.8.2
 	github.com/google/wire v0.4.0

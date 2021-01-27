@@ -70,17 +70,10 @@ import (
 )
 
 func NewGrpcServer(app *{{.PackageName}}.App) *grpc.Server {
-	target := app.Conf.GetString("grpc_server_tcp")
-
-	in := strings.Index(target, ":")
-	if in < 0 {
-		target = ":"+target
-	}
-
 	serverOptions := grpc.ServerOptions{}
 
 	// grpc服务初始化
-	grpcServer :=  grpc.NewServer(target,
+	grpcServer :=  grpc.NewServer(
 		serverOptions.WithServerConf(app.Conf),
 		serverOptions.WithServerLogger(app.Logger),
 		serverOptions.WithUnarySrvItcp(),
@@ -89,7 +82,7 @@ func NewGrpcServer(app *{{.PackageName}}.App) *grpc.Server {
 	)
 
 	// 注册grpc路由
-	routers.RegisterGrpcServer(grpcServer.Server, controllers.NewControllers(app))
+	routers.RegisterGrpcServer(grpcServer.Server(), controllers.NewControllers(app))
 
 	return grpcServer
 }

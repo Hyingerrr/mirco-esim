@@ -75,15 +75,15 @@ func NewViperConfig(options ...Option) Config {
 		}
 	}
 	c.Viper = v
-	setInstance(c)
-	return c
+	return setInstance(c)
 }
 
-func setInstance(c *viperConf) {
+func setInstance(c *viperConf) Config {
 	if _conf != nil {
-		return
+		return _conf
 	}
 	_conf = c
+	return _conf
 }
 
 func (ViperConfOptions) WithConfigType(configType string) Option {

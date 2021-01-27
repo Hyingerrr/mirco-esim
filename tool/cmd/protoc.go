@@ -31,6 +31,8 @@ func init() {
 
 	protocCmd.Flags().StringP("package", "p", "", "package名称")
 
+	protocCmd.Flags().BoolP("validate", "v", false, "是否生成验证tag")
+
 	err := v.BindPFlags(protocCmd.Flags())
 	if err != nil {
 		logger.Errorf(err.Error())

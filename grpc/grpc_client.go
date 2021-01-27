@@ -3,39 +3,28 @@ package grpc
 import (
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
-	ggp "github.com/grpc-ecosystem/go-grpc-prometheus"
+	"google.golang.org/grpc/keepalive"
+
 	"github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
-	"github.com/jukylin/esim/config"
-	"github.com/jukylin/esim/log"
+	logx "github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/opentracing"
 	opentracing2 "github.com/opentracing/opentracing-go"
-	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/keepalive"
 )
 
 type Client struct {
 	conn *grpc.ClientConn
 
-	cancel context.CancelFunc
-
-	logger log.Logger
-
 	clientOpts *ClientOptions
 }
 
 type ClientOptions struct {
-	clientMetrics *ggp.ClientMetrics
-
 	tracer opentracing2.Tracer
 
-	logger log.Logger
-
-	conf config.Config
-
 	opts []grpc.DialOption
+
+	config *ClientConfig
 }
 
 type ClientOptional func(c *ClientOptions)
@@ -43,96 +32,42 @@ type ClientOptional func(c *ClientOptions)
 type ClientOptionals struct{}
 
 func NewClientOptions(options ...ClientOptional) *ClientOptions {
-	co := &ClientOptions{}
+	c := &ClientOptions{}
 
 	for _, option := range options {
-		option(co)
+		option(c)
 	}
 
-	if co.logger == nil {
-		co.logger = log.NewLogger()
+	if c.tracer == nil {
+		c.tracer = opentracing.NewTracer("grpc_client", logx.NewLogger())
 	}
 
-	if co.conf == nil {
-		co.conf = config.NewMemConfig()
-	}
-
-	if co.tracer == nil {
-		co.tracer = opentracing.NewTracer("grpc_client", co.logger)
-	}
-
-	if co.clientMetrics == nil {
-		ggp.EnableClientHandlingTimeHistogram(ggp.WithHistogramBuckets(prometheus.DefBuckets))
-		co.clientMetrics = ggp.DefaultClientMetrics
-	}
-
-	keepAliveClient := keepalive.ClientParameters{}
-	ClientKpTime := co.conf.GetInt("grpc_client_kp_time")
-	if ClientKpTime == 0 {
-		ClientKpTime = 60
-	}
-	keepAliveClient.Time = time.Duration(ClientKpTime) * time.Second
-
-	ClientKpTimeOut := co.conf.GetInt("grpc_client_kp_time_out")
-	if ClientKpTimeOut == 0 {
-		ClientKpTimeOut = 5
-	}
-	keepAliveClient.Timeout = time.Duration(ClientKpTimeOut) * time.Second
-
-	ClientPermitWithoutStream := co.conf.GetBool("grpc_client_permit_without_stream")
-	keepAliveClient.PermitWithoutStream = ClientPermitWithoutStream
+	c.setClientConfig()
 
 	opts := []grpc.DialOption{
 		grpc.WithInsecure(),
-		grpc.WithKeepaliveParams(keepAliveClient),
+		grpc.WithKeepaliveParams(keepalive.ClientParameters{
+			Time:                c.config.KeepTime,
+			Timeout:             c.config.KeepTimeOut,
+			PermitWithoutStream: c.config.PermitWithoutStream,
+		}),
+		grpc.WithChainUnaryInterceptor(c.metaClientData(), c.handleClient()),
 	}
 
-	opts = append(opts, grpc.WithChainUnaryInterceptor(co.metaClientData()))
-
-	if co.conf.GetBool("grpc_client_tracer") {
-		tracerInterceptor := otgrpc.OpenTracingClientInterceptor(co.tracer)
+	// todo
+	if c.config.Tracer {
+		tracerInterceptor := otgrpc.OpenTracingClientInterceptor(c.tracer)
 		opts = append(opts, grpc.WithChainUnaryInterceptor(tracerInterceptor))
 	}
 
-	if co.conf.GetBool("grpc_client_metrics") {
-		opts = append(opts, grpc.WithChainUnaryInterceptor(
-			co.clientMetrics.UnaryClientInterceptor()))
-	}
+	c.opts = append(c.opts, opts...)
 
-	if co.conf.GetBool("grpc_client_check_slow") {
-		opts = append(opts, grpc.WithChainUnaryInterceptor(co.checkClientSlow()))
-	}
-
-	if co.conf.GetBool("grpc_client_debug") {
-		opts = append(opts, grpc.WithChainUnaryInterceptor(co.clientDebug()))
-	}
-
-	co.opts = append(opts, co.opts...)
-
-	return co
-}
-
-func (ClientOptionals) WithConf(conf config.Config) ClientOptional {
-	return func(g *ClientOptions) {
-		g.conf = conf
-	}
-}
-
-func (ClientOptionals) WithLogger(logger log.Logger) ClientOptional {
-	return func(g *ClientOptions) {
-		g.logger = logger
-	}
+	return c
 }
 
 func (ClientOptionals) WithTracer(tracer opentracing2.Tracer) ClientOptional {
 	return func(g *ClientOptions) {
 		g.tracer = tracer
-	}
-}
-
-func (ClientOptionals) WithMetrics(metrics *ggp.ClientMetrics) ClientOptional {
-	return func(g *ClientOptions) {
-		g.clientMetrics = metrics
 	}
 }
 
@@ -154,17 +89,13 @@ func NewClient(clientOptions *ClientOptions) *Client {
 
 func (gc *Client) DialContext(ctx context.Context, target string) *grpc.ClientConn {
 	var cancel context.CancelFunc
-
-	ClientConnTimeOut := gc.clientOpts.conf.GetInt("grpc_client_conn_time_out")
-	if ClientConnTimeOut == 0 {
-		ClientConnTimeOut = 3
-		ctx, cancel = context.WithTimeout(ctx, time.Duration(ClientConnTimeOut)*time.Second)
-		gc.cancel = cancel
-	}
+	// connect timeout ctrl
+	ctx, cancel = context.WithTimeout(ctx, gc.clientOpts.config.DialTimeout)
+	defer cancel()
 
 	conn, err := grpc.DialContext(ctx, target, gc.clientOpts.opts...)
 	if err != nil {
-		gc.logger.Errorf(err.Error())
+		logx.Errorc(ctx, "grpc dial error: %v", err)
 		return nil
 	}
 	gc.conn = conn
@@ -174,73 +105,16 @@ func (gc *Client) DialContext(ctx context.Context, target string) *grpc.ClientCo
 
 func (gc *Client) Close() {
 	gc.conn.Close()
-	gc.cancel()
 }
 
-func (gc *ClientOptions) checkClientSlow() func(ctx context.Context,
-	method string, req, reply interface{}, cc *grpc.ClientConn,
-	invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-	return func(ctx context.Context, method string, req, reply interface{},
-		cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-		ClientSlowTime := gc.conf.GetInt64("grpc_client_slow_time")
+type TimeoutCallOption struct {
+	*grpc.EmptyCallOption
+	Timeout time.Duration
+}
 
-		beginTime := time.Now()
-		err := invoker(ctx, method, req, reply, cc, opts...)
-		endTime := time.Now()
-
-		if ClientSlowTime != 0 {
-			if endTime.Sub(beginTime) > time.Duration(ClientSlowTime)*time.Millisecond {
-				gc.logger.Warnc(ctx, "slow client grpc_handle %s", method)
-			}
-		}
-
-		return err
+func WithTimeout(timeout time.Duration) *TimeoutCallOption {
+	return &TimeoutCallOption{
+		EmptyCallOption: &grpc.EmptyCallOption{},
+		Timeout:         timeout,
 	}
-}
-
-func (gc *ClientOptions) clientDebug() func(ctx context.Context,
-	method string, req, reply interface{}, cc *grpc.ClientConn,
-	invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-	return func(ctx context.Context, method string, req, reply interface{},
-		cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-		beginTime := time.Now()
-		gc.logger.Debugc(ctx, "Grpc client start %s : %s, req : %s",
-			cc.Target(), method, spew.Sdump(req))
-
-		err := invoker(ctx, method, req, reply, cc, opts...)
-
-		endTime := time.Now()
-		gc.logger.Debugc(ctx, "Grpc client end [%v] %s : %s, reply : %s",
-			endTime.Sub(beginTime).String(), cc.Target(), method, spew.Sdump(reply))
-
-		return err
-	}
-}
-
-func ClientStubs(stubsFunc func(ctx context.Context, method string, req, reply interface{},
-	cc *grpc.ClientConn, invoker grpc.UnaryInvoker,
-	opts ...grpc.CallOption) error) func(ctx context.Context,
-	method string, req, reply interface{}, cc *grpc.ClientConn,
-	invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-	return func(ctx context.Context, method string, req, reply interface{},
-		cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-		err := stubsFunc(ctx, method, req, reply, cc, invoker, opts...)
-		return err
-	}
-}
-
-func slowRequest(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn,
-	invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-	time.Sleep(20 * time.Millisecond)
-	err := invoker(ctx, method, req, reply, cc, opts...)
-	return err
-}
-
-//nolint:deadcode,unused
-func timeoutRequest(ctx context.Context, method string, req, reply interface{},
-	cc *grpc.ClientConn,
-	invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-	time.Sleep(10 * time.Second)
-	err := invoker(ctx, method, req, reply, cc, opts...)
-	return err
 }

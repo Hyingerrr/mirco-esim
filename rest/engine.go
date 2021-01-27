@@ -4,14 +4,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/core/xenv"
-	"github.com/jukylin/esim/log"
+	logx "github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/rest/handler"
 )
 
 type engine struct {
-	gin    *gin.Engine
-	conf   config.Config
-	logger log.Logger
+	gin *gin.Engine
 }
 
 type Option func(*engine)
@@ -23,9 +21,9 @@ func NewGinEngine(opts ...Option) *engine {
 		opt(e)
 	}
 
-	m := xenv.SetRunMode(e.conf.GetString("runmode"))
+	m := xenv.SetRunMode(config.GetString("runmode"))
 	if !m.IsValid() {
-		e.logger.Panicf("RunMode InValid")
+		logx.Panicf("RunMode InValid")
 	}
 
 	if xenv.IsPro() {
@@ -40,32 +38,23 @@ func NewGinEngine(opts ...Option) *engine {
 	return e
 }
 
-func WithLogger(logger log.Logger) Option {
-	return func(e *engine) {
-		e.logger = logger
-	}
-}
-
-func WithConf(conf config.Config) Option {
-	return func(e *engine) {
-		e.conf = conf
-	}
-}
-
 func (en *engine) bindMiddleware() {
-	if en.conf.GetBool("http_metrics") {
+
+	en.gin.Use(handler.TracerID(), handler.Recover())
+
+	if config.GetBool("http_metrics") {
 		en.gin.Use(handler.HttpMonitor())
 	}
 
-	if en.conf.GetBool("http_tracer") {
+	if config.GetBool("http_tracer") {
 		en.gin.Use(handler.HttpTracer())
 	}
-
-	en.gin.Use(handler.TracerID(), handler.Recover(en.logger))
-
-	en.gin.Use(handler.SetMetadata())
 }
 
 func (en *engine) Gine() *gin.Engine {
 	return en.gin
+}
+
+func (en *engine) Use(middleware ...gin.HandlerFunc) {
+	en.gin.Use(middleware...)
 }

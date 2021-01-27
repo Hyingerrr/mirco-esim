@@ -3,6 +3,7 @@ package protoc
 import (
 	"bufio"
 	"fmt"
+	"go/build"
 	"io"
 	"os"
 	"os/exec"
@@ -29,6 +30,8 @@ type Protocer struct {
 	packageName string
 
 	logger log.Logger
+
+	validate bool
 }
 
 type Option func(*Protocer)
@@ -98,6 +101,8 @@ func (p *Protocer) bindInput(v *viper.Viper) bool {
 		p.logger.Fatalf("Create fail % : %s", target+string(filepath.Separator)+pkgName, err.Error())
 	}
 
+	p.validate = v.GetBool("validate")
+
 	return true
 }
 
@@ -113,9 +118,18 @@ func (p *Protocer) execCmd() bool {
 		p.logger.Fatalf(err.Error())
 	}
 
-	cmdLine := fmt.Sprintf("--go_out=plugins=grpc:%s --proto_path %s %s",
-		p.target+string(filepath.Separator)+p.packageName, p.protoPath, p.fromProto)
-
+	goPath := os.Getenv("GOPATH")
+	if goPath == "" {
+		goPath = build.Default.GOPATH
+	}
+	var cmdLine string
+	if p.validate {
+		cmdLine = fmt.Sprintf("--gogo_out=plugins=grpc:%s --proto_path %s --proto_path %s %s",
+			p.target+string(filepath.Separator)+p.packageName, goPath+"/src", p.protoPath, p.fromProto)
+	} else {
+		cmdLine = fmt.Sprintf("--go_out=plugins=grpc:%s --proto_path %s %s",
+			p.target+string(filepath.Separator)+p.packageName, p.protoPath, p.fromProto)
+	}
 	p.logger.Infof("%s %s", protocCmd, cmdLine)
 
 	args := strings.Split(cmdLine, " ")

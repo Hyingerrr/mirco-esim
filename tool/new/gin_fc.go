@@ -112,12 +112,14 @@ type GinServer struct{
 
 func NewGinServer(app *{{.PackageName}}.App) *GinServer {
 	port := app.Conf.GetString("httpport")
-	in := strings.Index(port, ":")
-	if in < 0 {
+	if in := strings.Index(port, ":"); in < 0 {
 		port = ":"+port
 	}
 
-	rGin := rest.NewGinEngine(rest.WithConf(app.Conf), rest.WithLogger(app.Logger))
+	rGin := rest.NewGinEngine()
+
+	// MUST: middleware metadata must before the monitor
+	rGin.Use(handler.SetMetadata())
 
 	server := &GinServer{
 		en : rGin.Gine(),
@@ -146,8 +148,8 @@ func (gs *GinServer) Start(){
 }
 
 func (gs *GinServer) GracefulShutDown()  {
-	ctx, cannel := context.WithTimeout(context.Background(), 3 * time.Second)
-	defer cannel()
+	ctx, cancel := context.WithTimeout(context.Background(), 3 * time.Second)
+	defer cancel()
 	if err := gs.server.Shutdown(ctx); err != nil {
 		gs.logger.Errorf("stop http server error %s", err.Error())
 	}

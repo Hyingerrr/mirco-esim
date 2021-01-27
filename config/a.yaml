@@ -1,4 +1,5 @@
 name : esim
+appname: "Esim"
 
 # log配置参考
 log_output: both  # 日志位置，file 文件|both 文件和终端|stdout 终端
@@ -25,3 +26,17 @@ redis_password: ""
 wx_web_hook: e0c3df32-547b-4699-a887-67c5ae8ea877
 wx_retries: 3
 wx_interval: 3
+
+#服务端
+grpc_server_tcp: ':50250'
+grpc_server_kp_time: 60  # s
+grpc_server_kp_time_out: 5 # s
+#链接超时
+grpc_server_conn_time_out: 300 # ms
+
+#客户端
+grpc_client_kp_time : 60 # s
+grpc_client_kp_time_out : 5 # s
+#链接超时 单位：ms
+grpc_client_conn_time_out : 300 # ms
+grpc_client_permit_without_stream: true

@@ -14,7 +14,7 @@ import (
 
 func SetMetadata() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var metadata = new(meta.CommonParams)
+		metadata := new(meta.CommonParams)
 		reqBuf, err := c.GetRawData()
 		if err != nil {
 			c.AbortWithStatus(http.StatusNotExtended)
