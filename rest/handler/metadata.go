@@ -6,8 +6,6 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/jukylin/esim/config"
-
 	"github.com/gin-gonic/gin"
 	"github.com/jukylin/esim/core/meta"
 )
@@ -28,15 +26,14 @@ func SetMetadata() gin.HandlerFunc {
 		}
 
 		md := meta.MD{
-			meta.ProdCd:      metadata.ParseProdCd(),
-			meta.AppID:       metadata.AppID,
-			meta.MerID:       metadata.ParseMerID(),
-			meta.RequestNo:   metadata.RequestNo,
-			meta.TranCd:      metadata.ParseTranCd(),
-			meta.Method:      c.Request.Method,
-			meta.Protocol:    meta.HTTPProtocol,
-			meta.Uri:         c.Request.URL.Path,
-			meta.ServiceName: config.GetString("appname"),
+			meta.ProdCd:    metadata.ParseProdCd(),
+			meta.AppID:     metadata.AppID,
+			meta.MerID:     metadata.ParseMerID(),
+			meta.RequestNo: metadata.RequestNo,
+			meta.TranCd:    metadata.ParseTranCd(),
+			meta.Method:    c.Request.Method,
+			meta.Protocol:  meta.HTTPProtocol,
+			meta.Uri:       c.Request.URL.Path,
 		}
 		rCtx := meta.NewContext(c.Request.Context(), md)
 		c.Request = c.Request.WithContext(rCtx)

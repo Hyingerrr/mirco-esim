@@ -23,7 +23,12 @@ var (
 )
 
 func SetRunMode(mode string) *RunMode {
-	env = DeployEnv(mode)
+	if mode == "" {
+		env = DeployEnvDev
+	} else {
+		env = DeployEnv(mode)
+	}
+
 	return &RunMode{mode: env}
 }
 

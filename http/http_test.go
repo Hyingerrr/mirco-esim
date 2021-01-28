@@ -8,6 +8,9 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
+
+	"github.com/go-resty/resty/v2"
 
 	"fmt"
 
@@ -220,8 +223,20 @@ func TestClient_Post(t *testing.T) {
 		req = "channelid=D01X20200424011&merid=831290456990006&notifymobileno=18256083885&notifyusername=HY" +
 			"&opt=zwrefund&oriwtorderid=11420200716190044117038&sign=A86CE990D5EA4A2EBBCA1E476C9F0&termid=" +
 			"32765486&tradeamt=1&tradetrace=2020071728709821431677759"
+		beg = time.Now()
 	)
+
+	fmt.Printf("start time: %v\n", beg.String())
+
 	httpClient := NewClient()
+	httpClient.RClient().OnAfterResponse(func(client *resty.Client, response *resty.Response) error {
+		fmt.Printf("end time: %v\n", time.Now().String())
+		fmt.Printf("cost: %v\n", time.Since(beg).String())
+		fmt.Println(response.Request.RawRequest.URL.Path)
+		fmt.Println("get result: " + string(response.Body()))
+
+		return nil
+	})
 	resp, err := httpClient.Post(context.Background(), url, "application/x-www-form-urlencoded;charset=UTF-8", strings.NewReader(req))
 	it.Nil(err)
 	defer resp.Body.Close()

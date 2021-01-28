@@ -13,6 +13,7 @@ import (
 	"github.com/jukylin/esim/transports"
 	"{{.ProPath}}{{.ServerName}}/internal/infra"
 	"github.com/jukylin/esim/container"
+	"github.com/jukylin/esim/core/xenv"
 	"github.com/jukylin/esim/config"
 )
 
@@ -42,22 +43,16 @@ func NewApp(options ...Option) *App {
 	}
 
 	container.SetConfFunc(func() config.Config {
-		options := config.ViperConfOptions{}
-
+		opts := config.ViperConfOptions{}
 		monitFile := app.confPath + "monitoring.yaml"
 		confFile := app.confPath + "conf.yaml"
 
 		file := []string{monitFile, confFile}
-		conf := config.NewViperConfig(options.WithConfigType("yaml"),
-			options.WithConfFile(file))
+		conf := config.NewViperConfig(opts.WithConfigType("yaml"),
+			opts.WithConfFile(file))
 
-		/*此处暂且注释
-		env := os.Getenv("ENV")
-		if env == "" {
-			conf.Set("runmode", "dev")
-		}*/
-
-		if conf.GetString("runmode") != "pro" {
+		xenv.SetRunMode(conf.GetString("runmode"))
+		if !xenv.IsPro() {
 			conf.Set("debug", true)
 		}
 

@@ -121,7 +121,6 @@ func provideAppName(conf config.Config) string {
 }
 
 // Esim init end.
-
 func NewEsim() *Esim {
 	esimOnce.Do(func() {
 		onceEsim = initEsim()
@@ -132,4 +131,8 @@ func NewEsim() *Esim {
 
 func (e *Esim) String() string {
 	return "Esim 基础框架;"
+}
+
+func GetServiceName() string {
+	return onceEsim.AppName
 }

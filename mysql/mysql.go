@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/jukylin/esim/container"
+
 	_ "github.com/go-sql-driver/mysql"
 
 	"github.com/jinzhu/gorm"
@@ -257,13 +259,15 @@ func (c *Client) Stats() {
 	for {
 		select {
 		case <-ticker.C:
+			serviceName := container.GetServiceName()
 			for dbName, db := range c.sqlDbs {
 				stats = db.Stats()
-				mysqlDBStats.Set(float64(stats.MaxOpenConnections), dbName, "max_open_conn")
-				mysqlDBStats.Set(float64(stats.OpenConnections), dbName, "open_conn")
-				mysqlDBStats.Set(float64(stats.InUse), dbName, "in_use")
-				mysqlDBStats.Set(float64(stats.Idle), dbName, "idle")
-				mysqlDBStats.Set(float64(stats.WaitCount), dbName, "wait_count")
+				dbSchema := c.gdbs[dbName].Scopes().Dialect().CurrentDatabase()
+				mysqlDBStats.Set(float64(stats.MaxOpenConnections), serviceName, dbSchema, "max_open_conn")
+				mysqlDBStats.Set(float64(stats.OpenConnections), serviceName, dbSchema, "open_conn")
+				mysqlDBStats.Set(float64(stats.InUse), serviceName, dbSchema, "in_use")
+				mysqlDBStats.Set(float64(stats.Idle), serviceName, dbSchema, "idle")
+				mysqlDBStats.Set(float64(stats.WaitCount), serviceName, dbSchema, "wait_count")
 			}
 		case <-c.closeChan:
 			c.logger.Infof("stop stats")

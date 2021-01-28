@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/jukylin/esim/config"
+
 	"github.com/gin-gonic/gin"
 
 	"github.com/jukylin/esim/core/meta"
@@ -29,9 +31,10 @@ var responseStatus = metrics.CreateMetricCount(
 func HttpMonitor() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var (
-			start   = time.Now()
-			labels  []string
-			rplabel []string
+			start       = time.Now()
+			labels      []string
+			rplabel     []string
+			serviceName = config.GetString("appname")
 		)
 
 		var getCtx = func(label string) string {
@@ -39,16 +42,13 @@ func HttpMonitor() gin.HandlerFunc {
 		}
 
 		// request
-		labels = append(labels, getCtx(meta.ServiceName), c.Request.URL.Path, getCtx(meta.TranCd), getCtx(meta.AppID))
-
-		// response
-		rplabel = append(rplabel, getCtx(meta.ServiceName), c.Request.URL.Path, getCtx(meta.TranCd), fmt.Sprintf("%d", c.Writer.Status()))
-
+		labels = append(labels, serviceName, c.Request.URL.Path, getCtx(meta.TranCd), getCtx(meta.AppID))
 		serverReqQPS.Inc(labels...)
 		serverReqDuration.Observe(time.Since(start).Seconds(), labels...)
 
 		c.Next()
-
+		// response
+		rplabel = append(rplabel, serviceName, c.Request.URL.Path, getCtx(meta.TranCd), fmt.Sprintf("%d", c.Writer.Status()))
 		responseStatus.Inc(rplabel...)
 	}
 }

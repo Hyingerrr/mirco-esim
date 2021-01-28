@@ -22,13 +22,17 @@ import (
 
 func (gc *ClientOptions) handleClient() grpc.UnaryClientInterceptor {
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-		var beg = time.Now()
-		var codes = "200"
+		var (
+			beg = time.Now()
+			// 假设
+			codes      = "200"
+			serverName = config.GetString("appname")
+			// request timeout ctrl
+			// timeout ctx must before the all
+			timeOpt *TimeoutCallOption
+			cancel  context.CancelFunc
+		)
 
-		// request timeout ctrl
-		// timeout ctx must before the all
-		var timeOpt *TimeoutCallOption
-		var cancel context.CancelFunc
 		for _, opt := range opts {
 			var ok bool
 			timeOpt, ok = opt.(*TimeoutCallOption)
@@ -62,10 +66,7 @@ func (gc *ClientOptions) handleClient() grpc.UnaryClientInterceptor {
 
 		// metrics
 		if gc.config.Metrics {
-			var serverName, appId string
-			if sn := md.Get(meta.ServiceName); len(sn) > 0 {
-				serverName = sn[0]
-			}
+			var appId string
 			if ai := md.Get(meta.AppID); len(ai) > 0 {
 				appId = ai[0]
 			}
@@ -132,7 +133,6 @@ func setClientMetadata(req interface{}) (metadata.MD, error) {
 	d.Set(meta.ProdCd, cmd.Head.ProdCd)
 	d.Set(meta.TranCd, cmd.Head.TranCd)
 	d.Set(meta.TranSeq, cmd.Head.TranSeq)
-	d.Set(meta.ServiceName, config.GetString("appname"))
 	d.Set(meta.Protocol, meta.RPCProtocol)
 
 	if srcSysId := cmd.Head.SrcSysId; srcSysId == "" {

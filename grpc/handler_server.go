@@ -6,6 +6,8 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/jukylin/esim/container"
+
 	tracerid "github.com/jukylin/esim/pkg/tracer-id"
 	"github.com/jukylin/esim/pkg/validate"
 	opentracing2 "github.com/opentracing/opentracing-go"
@@ -24,11 +26,12 @@ import (
 
 var checker = validate.NewValidateRepo()
 
-func (gs *Server) metaServerData() grpc.UnaryServerInterceptor {
+func (gs *Server) handleServer() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 		var (
-			start  = time.Now()
-			cancel func()
+			start       = time.Now()
+			cancel      func()
+			serviceName = container.GetServiceName()
 		)
 
 		// get timeout from ctx, compare with the config
@@ -59,7 +62,12 @@ func (gs *Server) metaServerData() grpc.UnaryServerInterceptor {
 
 		// monitor
 		if gs.config.Metrics {
-			_serverGRPCReqQPS.Inc(meta.String(ctx, meta.ServiceName), info.FullMethod, meta.String(ctx, meta.AppID))
+			// debug
+			var appId string
+			if appId = meta.String(ctx, meta.AppID); appId == "" {
+				logx.Errorc(ctx, "AppID_Is_Empty: method[%v], appId[%v]", info.FullMethod, meta.String(ctx, meta.AppID))
+			}
+			_serverGRPCReqQPS.Inc(serviceName, info.FullMethod, meta.String(ctx, meta.AppID))
 		}
 
 		resp, err = handler(ctx, req)
@@ -73,7 +81,7 @@ func (gs *Server) metaServerData() grpc.UnaryServerInterceptor {
 		// monitor
 		if gs.config.Metrics {
 			_serverGRPCReqDuration.Observe(float64(time.Since(start)/time.Millisecond),
-				meta.String(ctx, meta.ServiceName), info.FullMethod, meta.String(ctx, meta.AppID))
+				serviceName, info.FullMethod, meta.String(ctx, meta.AppID))
 		}
 
 		// check grpc slow

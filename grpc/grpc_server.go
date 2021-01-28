@@ -58,7 +58,7 @@ func NewServer(options ...ServerOption) *Server {
 
 	s.server = grpc.NewServer(baseOpts...)
 
-	s.Use(s.recovery(), s.metaServerData(), s.tracerID())
+	s.Use(s.recovery(), s.handleServer(), s.tracerID())
 
 	if s.config.Validate {
 		s.Use(s.validate())

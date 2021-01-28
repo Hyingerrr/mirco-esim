@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"time"
 
+	"github.com/jukylin/esim/container"
+
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/opentracing"
@@ -161,8 +163,8 @@ func (mp *MonitorProxy) withSlowSQL(query string, beginTime, endTime time.Time) 
 }
 
 func (mp *MonitorProxy) withMysqlMetrics(query string, beginTime, endTime time.Time) {
-	mysqlDBTotal.Inc(query)
-	mysqlDBDuration.Observe(endTime.Sub(beginTime).Seconds(), query)
+	mysqlDBTotal.Inc(container.GetServiceName(), query)
+	mysqlDBDuration.Observe(endTime.Sub(beginTime).Seconds(), container.GetServiceName(), query)
 }
 
 // Waiting for version 2.0 .

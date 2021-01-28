@@ -4,16 +4,23 @@ import (
 	"runtime"
 	"strconv"
 
+	"github.com/jukylin/esim/config"
+
+	"github.com/jukylin/esim/core/meta"
+
 	"github.com/jukylin/esim/metrics"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
-var logMetricErrorCounter = metrics.CreateMetricCount("log_error_stats", []string{"caller"}...)
+var logMetricErrorCounter = metrics.CreateMetricCount(
+	"log_error_stats",
+	[]string{meta.ServiceName, "caller"}...,
+)
 
 func addErrMetric(entry zapcore.Entry) error {
 	if entry.Level == zap.ErrorLevel {
-		logMetricErrorCounter.Inc(funcName(3))
+		logMetricErrorCounter.Inc(config.GetString("appname"), funcName(3))
 	}
 
 	return nil

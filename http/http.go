@@ -21,7 +21,7 @@ type Client struct {
 
 	transports []func() interface{}
 
-	Client *resty.Client // go-resty用法灵活，大写公开，不必局限于该文件下的SendPOST、SendGET等方法；
+	Client *resty.Client // go-resty用法灵活，不必局限于该文件下的SendPOST、SendGET等方法；
 }
 
 type Options func(*Client)
@@ -138,4 +138,8 @@ func (c *Client) PostForm(ctx context.Context, addr string, data url.Values) (re
 
 func (c *Client) CloseIdleConnections(ctx context.Context) {
 	c.Client.SetCloseConnection(true)
+}
+
+func (c *Client) RClient() *resty.Client {
+	return c.Client
 }

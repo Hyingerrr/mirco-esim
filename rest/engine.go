@@ -39,11 +39,10 @@ func NewGinEngine(opts ...Option) *engine {
 }
 
 func (en *engine) bindMiddleware() {
-
 	en.gin.Use(handler.TracerID(), handler.Recover())
 
 	if config.GetBool("http_metrics") {
-		en.gin.Use(handler.HttpMonitor())
+		en.gin.Use(handler.SetMetadata(), handler.HttpMonitor())
 	}
 
 	if config.GetBool("http_tracer") {
