@@ -47,6 +47,10 @@ func (gc *ClientOptions) handleClient() grpc.UnaryClientInterceptor {
 		}
 		defer cancel()
 
+		// debug
+		dl, _ := ctx.Deadline()
+		logx.Infoc(ctx, "request deadline: %v", dl.String())
+
 		// set metadata
 		md, err := setClientMetadata(req)
 		if err != nil {

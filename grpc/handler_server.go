@@ -41,8 +41,13 @@ func (gs *Server) handleServer() grpc.UnaryServerInterceptor {
 				timeout = out
 			}
 		}
+
+		// debug
+		logx.Infoc(ctx, "Server Deadline timeOut:%v", timeout)
 		ctx, cancel = context.WithTimeout(ctx, timeout*time.Millisecond)
 		defer cancel()
+		dls, _ := ctx.Deadline()
+		logx.Infoc(ctx, "Server Deadline:%v", dls)
 
 		md := meta.MD{}
 		if mdCtx, ok := metadata.FromIncomingContext(ctx); ok {
