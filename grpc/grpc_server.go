@@ -47,7 +47,7 @@ func NewServer(options ...ServerOption) *Server {
 		grpc.ConnectionTimeout(s.config.DialTimeout),
 		grpc.KeepaliveParams(keepalive.ServerParameters{
 			Timeout: s.config.KeepTimeOut,
-			Time:    s.config.Timeout,
+			Time:    s.config.KeepTime,
 		}),
 		grpc.UnaryInterceptor(s.handlerInterceptor),
 	}
@@ -58,7 +58,7 @@ func NewServer(options ...ServerOption) *Server {
 
 	s.server = grpc.NewServer(baseOpts...)
 
-	s.Use(s.recovery(), s.handleServer(), s.tracerID())
+	s.Use(s.tracerID(), s.recovery(), s.handleServer())
 
 	if s.config.Validate {
 		s.Use(s.validate())
