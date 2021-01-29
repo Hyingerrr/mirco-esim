@@ -2,7 +2,6 @@ package log
 
 import (
 	"runtime"
-	"strconv"
 
 	"github.com/jukylin/esim/config"
 
@@ -20,15 +19,16 @@ var logMetricErrorCounter = metrics.CreateMetricCount(
 
 func addErrMetric(entry zapcore.Entry) error {
 	if entry.Level == zap.ErrorLevel {
-		logMetricErrorCounter.Inc(config.GetString("appname"), funcName(3))
+		logMetricErrorCounter.Inc(config.GetString("appname"), funcName(7))
 	}
 
 	return nil
 }
 
 func funcName(skip int) (name string) {
-	if _, file, lineNo, ok := runtime.Caller(skip); ok {
-		return file + ":" + strconv.Itoa(lineNo)
-	}
-	return "unknown:0"
+	return zapcore.NewEntryCaller(runtime.Caller(skip)).TrimmedPath()
+	//if _, file, lineNo, ok := runtime.Caller(skip); ok {
+	//	return file + ":" + strconv.Itoa(lineNo)
+	//}
+	//return "unknown:0"
 }

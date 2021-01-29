@@ -6,12 +6,12 @@ import (
 )
 
 var (
-	mysqlDBTotal = metrics.CreateMetricCount("mysql_total", []string{meta.ServiceName, "sql"}...)
+	mysqlDBTotal = metrics.CreateMetricCount("mysql_total", []string{meta.ServiceName, "table"}...)
 
 	mysqlDBDuration = metrics.CreateMetricHistogram(
 		"mysql_duration_seconds",
 		[]float64{0.01, 0.05, 0.1, 0.5, 1},
-		[]string{meta.ServiceName, "sql"}...)
+		[]string{meta.ServiceName, "table"}...)
 
 	mysqlDBStats = metrics.CreateMetricGauge("mysql_stats", []string{meta.ServiceName, "db", "stats"}...)
 
