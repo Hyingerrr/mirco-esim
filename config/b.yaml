@@ -13,7 +13,7 @@ grpc_server_metrics : true
 #启动debug true/false
 grpc_server_debug: true
 # 单位ms
-grpc_server_timeout: 50000
+grpc_server_timeout: 30000
 # 启动字段验证
 grpc_server_validate: true
 

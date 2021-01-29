@@ -109,7 +109,7 @@ func (gc *ClientOptions) setClientConfig() {
 
 	s.DialTimeout = config.GetDuration("grpc_client_conn_time_out") * time.Millisecond
 	if s.DialTimeout == 0 {
-		s.DialTimeout = 2 * time.Millisecond
+		s.DialTimeout = 200 * time.Millisecond
 	}
 
 	s.KeepTime = config.GetDuration("grpc_client_kp_time") * time.Second

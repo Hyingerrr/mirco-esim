@@ -52,7 +52,7 @@ func (gc *ClientOptions) handleClient() grpc.UnaryClientInterceptor {
 		logx.Infoc(ctx, "request deadline: %v", dl.String())
 
 		// set metadata
-		md, err := setClientMetadata(req)
+		md, err := setClientMetadata(ctx, req)
 		if err != nil {
 			codes = "406"
 			return handlerErr(err)
@@ -112,7 +112,7 @@ func (gc *ClientOptions) addClientDebug() grpc.UnaryClientInterceptor {
 }
 
 // client
-func setClientMetadata(req interface{}) (metadata.MD, error) {
+func setClientMetadata(ctx context.Context, req interface{}) (metadata.MD, error) {
 	var (
 		cmd     = new(meta.CommonHeader)
 		d       = metadata.MD{}
@@ -123,7 +123,7 @@ func setClientMetadata(req interface{}) (metadata.MD, error) {
 	)
 
 	if err := json.Unmarshal(marshal(req), cmd); err != nil {
-		logx.Errorf("Metadata_Unmarshal err: %v", err)
+		logx.Errorc(ctx, "Metadata_Unmarshal err: %v", err)
 		return nil, err
 	}
 

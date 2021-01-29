@@ -51,7 +51,7 @@ func NewClientOptions(options ...ClientOptional) *ClientOptions {
 			Timeout:             c.config.KeepTimeOut,
 			PermitWithoutStream: c.config.PermitWithoutStream,
 		}),
-		grpc.WithChainUnaryInterceptor(c.handleClient(), c.addClientDebug()),
+		grpc.WithChainUnaryInterceptor(c.addClientDebug(), c.handleClient()),
 	}
 
 	// todo
@@ -92,6 +92,10 @@ func (gc *Client) DialContext(ctx context.Context, target string) *grpc.ClientCo
 	// connect timeout ctrl
 	ctx, cancel = context.WithTimeout(ctx, gc.clientOpts.config.DialTimeout)
 	defer cancel()
+
+	//todo debug
+	dl, _ := ctx.Deadline()
+	logx.Infoc(ctx, "拨号deadline:%v", dl.String())
 
 	conn, err := grpc.DialContext(ctx, target, gc.clientOpts.opts...)
 	if err != nil {

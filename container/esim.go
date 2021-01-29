@@ -134,5 +134,6 @@ func (e *Esim) String() string {
 }
 
 func GetServiceName() string {
-	return onceEsim.AppName
+	//return onceEsim.AppName
+	return "AppName"
 }

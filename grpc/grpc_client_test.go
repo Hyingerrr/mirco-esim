@@ -29,7 +29,7 @@ const (
 
 var (
 	logger    log.Logger
-	tcpAddr   = &net.TCPAddr{IP: net.ParseIP(address).To4(), Port: 50250}
+	tcpAddr   = &net.TCPAddr{IP: net.ParseIP(address).To4(), Port: 50252}
 	memConfig config.Config
 
 	clientOpt *ClientOptions

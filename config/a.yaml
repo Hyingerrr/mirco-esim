@@ -28,11 +28,11 @@ wx_retries: 3
 wx_interval: 3
 
 #服务端
-grpc_server_tcp: ':50250'
+grpc_server_tcp: ':50252'
 grpc_server_kp_time: 60  # s
 grpc_server_kp_time_out: 5 # s
 #链接超时
-grpc_server_conn_time_out: 300 # ms
+grpc_server_conn_time_out: 3000 # ms
 
 #客户端
 grpc_client_kp_time : 60 # s
