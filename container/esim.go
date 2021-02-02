@@ -5,6 +5,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/jukylin/esim/core/tracer"
+
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/jukylin/esim/metrics"
@@ -12,8 +14,6 @@ import (
 	"github.com/google/wire"
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
-	eot "github.com/jukylin/esim/opentracing"
-	"github.com/opentracing/opentracing-go"
 )
 
 var esimOnce sync.Once
@@ -30,7 +30,7 @@ type Esim struct {
 
 	Conf config.Config
 
-	Tracer opentracing.Tracer
+	Tracer *tracer.EsimTracer
 
 	AppName string
 }
@@ -97,23 +97,8 @@ func provideLogger(conf config.Config) log.Logger {
 	return loggerFunc(conf)
 }
 
-var tracerFunc = func(conf config.Config, logger log.Logger) opentracing.Tracer {
-	var appname string
-	if conf.GetString("appname") != "" {
-		appname = conf.GetString("appname")
-	} else {
-		appname = defaultAppname
-	}
-
-	logger.Infof("appname[%s]", appname)
-	return eot.NewTracer(appname, logger)
-}
-
-func SetTracer(tracer func(config.Config, log.Logger) opentracing.Tracer) {
-	tracerFunc = tracer
-}
-func provideTracer(conf config.Config, logger log.Logger) opentracing.Tracer {
-	return tracerFunc(conf, logger)
+func provideTracer() *tracer.EsimTracer {
+	return tracer.InitTracer()
 }
 
 func provideAppName(conf config.Config) string {
@@ -133,7 +118,7 @@ func (e *Esim) String() string {
 	return "Esim 基础框架;"
 }
 
-func GetServiceName() string {
+func AppName() string {
+	return "appname"
 	//return onceEsim.AppName
-	return "AppName"
 }

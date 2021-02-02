@@ -3,8 +3,8 @@ package container
 import (
 	"github.com/google/wire"
 	"github.com/jukylin/esim/config"
+	"github.com/jukylin/esim/core/tracer"
 	"github.com/jukylin/esim/metrics"
-	"github.com/opentracing/opentracing-go"
 )
 
 func provideMockConf() config.Config {
@@ -21,8 +21,8 @@ func provideMockAppName(conf config.Config) string {
 	return "mocktest"
 }
 
-func provideNoopTracer() opentracing.Tracer {
-	return opentracing.NoopTracer{}
+func provideNoopTracer() *tracer.EsimTracer {
+	return &tracer.EsimTracer{}
 }
 
 var MockSet = wire.NewSet(

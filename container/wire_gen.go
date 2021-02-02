@@ -11,7 +11,7 @@ func initEsim() *Esim {
 	config := provideConf()
 	logger := provideLogger(config)
 	prometheus := providePrometheus(config, logger)
-	tracer := provideTracer(config, logger)
+	tracer := provideTracer()
 	string2 := provideAppName(config)
 	esim := &Esim{
 		prometheus: prometheus,

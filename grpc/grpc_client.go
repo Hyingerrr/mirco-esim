@@ -5,7 +5,6 @@ import (
 
 	"google.golang.org/grpc/keepalive"
 
-	"github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
 	logx "github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/opentracing"
 	opentracing2 "github.com/opentracing/opentracing-go"
@@ -51,13 +50,22 @@ func NewClientOptions(options ...ClientOptional) *ClientOptions {
 			Timeout:             c.config.KeepTimeOut,
 			PermitWithoutStream: c.config.PermitWithoutStream,
 		}),
-		grpc.WithChainUnaryInterceptor(c.addClientDebug(), c.handleClient()),
+		grpc.WithChainUnaryInterceptor(timeOutUnaryClientInterceptor(c.config.Timeout)),
 	}
 
-	// todo
+	if c.config.Debug {
+		opts = append(opts,
+			grpc.WithChainUnaryInterceptor(debugUnaryClientInterceptor(c.config.SlowTime)))
+	}
+
 	if c.config.Tracer {
-		tracerInterceptor := otgrpc.OpenTracingClientInterceptor(c.tracer)
-		opts = append(opts, grpc.WithChainUnaryInterceptor(tracerInterceptor))
+		opts = append(opts,
+			grpc.WithChainUnaryInterceptor(traceUnaryClientInterceptor()))
+	}
+
+	if c.config.Metrics {
+		opts = append(opts,
+			grpc.WithChainUnaryInterceptor(metricUnaryClientInterceptor()))
 	}
 
 	c.opts = append(c.opts, opts...)

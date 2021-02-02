@@ -5,7 +5,6 @@ import (
 
 	"google.golang.org/grpc/keepalive"
 
-	"github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
 	logx "github.com/jukylin/esim/log"
 	opentracing2 "github.com/opentracing/opentracing-go"
 	"golang.org/x/net/context"
@@ -58,15 +57,24 @@ func NewServer(options ...ServerOption) *Server {
 
 	s.server = grpc.NewServer(baseOpts...)
 
-	s.Use(s.recovery(), s.tracerID(), s.handleServer())
+	s.Use(recoverServerInterceptor(), tracerIDServerInterceptor())
+	// timeout
+	s.Use(timeoutUnaryServerInterceptor(s.config.Timeout))
 
-	if s.config.Validate {
-		s.Use(s.validate())
+	if s.config.Debug {
+		s.Use(debugUnaryServerInterceptor(s.config.SlowTime))
 	}
 
-	// todo tracer
+	if s.config.Validate {
+		s.Use(validateServerInterceptor())
+	}
+
 	if s.config.Tracer {
-		s.Use(otgrpc.OpenTracingServerInterceptor(s.tracer))
+		s.Use(traceUnaryServerInterceptor)
+	}
+
+	if s.config.Metrics {
+		s.Use(metricUnaryServerInterceptor)
 	}
 
 	return s

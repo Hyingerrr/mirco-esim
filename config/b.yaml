@@ -7,7 +7,7 @@ grpc_server_check_slow : true
 #单位: ms
 grpc_server_slow_time : 500
 #开启 tracer true/false
-grpc_server_tracer : false
+grpc_server_tracer : true
 #启动metrice true/false
 grpc_server_metrics : true
 #启动debug true/false
@@ -23,7 +23,7 @@ grpc_client_check_slow : true
 #单位: ms
 grpc_client_slow_time : 500
 #开启 tracer true/false
-grpc_client_tracer : false
+grpc_client_tracer : true
 #启动metrice true/false
 grpc_client_metrics : true
 #启动debug true/false

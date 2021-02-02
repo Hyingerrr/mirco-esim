@@ -6,6 +6,16 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/jukylin/esim/core/rpcode"
+
+	"github.com/jukylin/esim/container"
+
+	"github.com/jukylin/esim/core/tracer"
+	"github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
+	opentracinglog "github.com/opentracing/opentracing-go/log"
+	"google.golang.org/grpc/codes"
+
 	"github.com/pkg/errors"
 	"google.golang.org/grpc/status"
 
@@ -20,13 +30,9 @@ import (
 	"google.golang.org/grpc"
 )
 
-func (gc *ClientOptions) handleClient() grpc.UnaryClientInterceptor {
+func timeOutUnaryClientInterceptor(timeout time.Duration) grpc.UnaryClientInterceptor {
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		var (
-			beg = time.Now()
-			// 假设
-			codes      = "200"
-			serverName = config.GetString("appname")
 			// request timeout ctrl
 			// timeout ctx must before the all
 			timeOpt *TimeoutCallOption
@@ -43,18 +49,30 @@ func (gc *ClientOptions) handleClient() grpc.UnaryClientInterceptor {
 		if timeOpt != nil && timeOpt.Timeout > 0 {
 			ctx, cancel = context.WithTimeout(ctx, timeOpt.Timeout)
 		} else {
-			ctx, cancel = context.WithTimeout(ctx, gc.config.Timeout)
+			ctx, cancel = context.WithTimeout(ctx, timeout)
 		}
 		defer cancel()
 
-		// debug
+		//debug
 		dl, _ := ctx.Deadline()
 		logx.Infoc(ctx, "request deadline: %v", dl.String())
+
+		err := invoker(ctx, method, req, reply, cc, opts...)
+
+		return handlerErr(err)
+	}
+}
+
+func metricUnaryClientInterceptor() grpc.UnaryClientInterceptor {
+	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+		var (
+			beg        = time.Now()
+			serverName = container.AppName()
+		)
 
 		// set metadata
 		md, err := setClientMetadata(ctx, req)
 		if err != nil {
-			codes = "406"
 			return handlerErr(err)
 		}
 
@@ -67,45 +85,41 @@ func (gc *ClientOptions) handleClient() grpc.UnaryClientInterceptor {
 		logx.Infoc(ctx, "Set_Client_Metadata: %v", md)
 
 		err = invoker(ctx, method, req, reply, cc, opts...)
+		rpcStatus := rpcode.ExtractCode(err)
+
+		var getAppID = func() string {
+			if ai := md.Get(meta.AppID); len(ai) > 0 {
+				return ai[0]
+			}
+			return ""
+		}
 
 		// metrics
-		if gc.config.Metrics {
-			var appId string
-			if ai := md.Get(meta.AppID); len(ai) > 0 {
-				appId = ai[0]
-			}
-			_clientGRPCReqDuration.Observe(float64(time.Since(beg)/time.Millisecond), serverName, method, appId)
-			_clientGRPCReqQPS.Inc(serverName, method, appId, codes)
-		}
+		_clientGRPCReqDuration.Observe(float64(time.Since(beg)/time.Millisecond), serverName, method, getAppID())
+		_clientGRPCReqQPS.Inc(serverName, method, getAppID(), rpcStatus.Code)
 
 		return handlerErr(err)
 	}
 }
 
-func (gc *ClientOptions) addClientDebug() grpc.UnaryClientInterceptor {
+func debugUnaryClientInterceptor(slowTime time.Duration) grpc.UnaryClientInterceptor {
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		beg := time.Now()
 
 		// request params
-		if gc.config.Debug {
-			logx.Infoc(ctx, "GRPC_Send_RequestParams: method[%v], target[%v], params:%+v",
-				method, cc.Target(), spew.Sdump(req))
-		}
+		logx.Infoc(ctx, "GRPC_Send_RequestParams: method[%v], target[%v], params:%+v",
+			method, cc.Target(), req)
 
 		err := invoker(ctx, method, req, reply, cc, opts...)
 
 		// check slow
-		if gc.config.SlowTime != 0 {
-			if sub := time.Now().Sub(beg); sub > gc.config.SlowTime {
-				logx.Warnc(ctx, "Slow_Client_GRPC handle: %s, target: %v, cost: %v", method, cc.Target(), sub)
-			}
+		if sub := time.Now().Sub(beg); sub > slowTime {
+			logx.Warnc(ctx, "Slow_Client_GRPC handle: %s, target: %v, cost: %v", method, cc.Target(), sub)
 		}
 
 		// response params
-		if gc.config.Debug {
-			logx.Infoc(ctx, "GRPC_Get_ResponseParams: method[%v], target[%v], params:%+v",
-				method, cc.Target(), spew.Sdump(reply))
-		}
+		logx.Infoc(ctx, "GRPC_Get_ResponseParams: method[%v], target[%v], params:%+v",
+			method, cc.Target(), spew.Sdump(reply))
 
 		return handlerErr(err)
 	}
@@ -159,6 +173,52 @@ func setClientMetadata(ctx context.Context, req interface{}) (metadata.MD, error
 	}
 
 	return d, nil
+}
+
+func traceUnaryClientInterceptor() grpc.UnaryClientInterceptor {
+	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+		// get span from parent context
+		span, ctx := opentracing.StartSpanFromContext(
+			ctx,
+			method,
+			opentracing.Tag{Key: string(ext.Component), Value: "grpc"},
+			ext.SpanKindRPCClient,
+		)
+		defer span.Finish()
+
+		ctx = injectSpanContext(ctx)
+		err := invoker(ctx, method, req, reply, cc, opts...)
+		if err != nil {
+			code := codes.Unknown
+			if s, ok := status.FromError(err); ok {
+				code = s.Code()
+			}
+			span.SetTag("response_code", code)
+			ext.Error.Set(span, true)
+
+			span.LogFields(opentracinglog.String("event", "error"), opentracinglog.String("message", err.Error()))
+		}
+		return err
+	}
+}
+
+func injectSpanContext(ctx context.Context) context.Context {
+	clientSpan := opentracing.SpanFromContext(ctx)
+	md, ok := metadata.FromOutgoingContext(ctx)
+	if !ok {
+		md = metadata.New(nil)
+	} else {
+		// 对metadata进行修改，需要用拷贝的副本进行修改
+		md = md.Copy()
+	}
+
+	carrier := tracer.MetadataReaderWriter{MD: md}
+	err := opentracing.GlobalTracer().Inject(clientSpan.Context(), opentracing.TextMap, carrier)
+	if err != nil {
+		clientSpan.LogFields(opentracinglog.String("event", "Tracer.Inject() failed"), opentracinglog.Error(err))
+	}
+
+	return metadata.NewOutgoingContext(ctx, md)
 }
 
 func handlerErr(err error) error {

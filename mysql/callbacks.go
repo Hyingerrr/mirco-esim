@@ -54,10 +54,10 @@ func (c *Client) handleError(ctx context.Context, scope *gorm.Scope) {
 	if err := scope.DB().Error; err == gorm.ErrRecordNotFound {
 		// db miss
 		c.logger.Errorc(ctx, "mysql_miss, schema[%v], sql_desc[%v]", schema, fmt.Sprintf("%v", scope.DB().QueryExpr()))
-		mysqlDBMiss.Inc(container.GetServiceName(), schema, scope.QuotedTableName())
+		mysqlDBMiss.Inc(container.AppName(), schema, scope.QuotedTableName())
 	} else {
 		// db error
 		c.logger.Errorc(ctx, "mysql_error: schema[%v], sql_desc[%v], err: %v", schema, fmt.Sprintf("%v", scope.DB().QueryExpr()), err)
-		mysqlDBError.Inc(container.GetServiceName(), schema, scope.QuotedTableName())
+		mysqlDBError.Inc(container.AppName(), schema, scope.QuotedTableName())
 	}
 }

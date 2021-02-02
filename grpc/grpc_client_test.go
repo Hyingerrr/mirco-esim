@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jukylin/esim/core/tracer"
+
 	"github.com/jukylin/esim/grpc/test"
 
 	"google.golang.org/grpc/codes"
@@ -51,6 +53,9 @@ func TestMain(m *testing.M) {
 	options := config.ViperConfOptions{}
 	memConfig = config.NewViperConfig(options.WithConfigType("yaml"),
 		options.WithConfFile([]string{"../config/a.yaml", "../config/b.yaml"}))
+
+	tracer.InitTracer()
+
 	opts := ClientOptionals{}
 	clientOpt = NewClientOptions(
 		opts.WithDialOptions())

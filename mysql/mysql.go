@@ -259,7 +259,7 @@ func (c *Client) Stats() {
 	for {
 		select {
 		case <-ticker.C:
-			serviceName := container.GetServiceName()
+			serviceName := container.AppName()
 			for dbName, db := range c.sqlDbs {
 				stats = db.Stats()
 				dbSchema := c.gdbs[dbName].Scopes().Dialect().CurrentDatabase()
