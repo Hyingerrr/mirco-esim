@@ -27,7 +27,7 @@ func initDefaultConfig() *Config {
 	agentAddr := "127.0.0.1:6831"
 	hn, _ := os.Hostname()
 	return &Config{
-		ServiceName: os.Getenv("APP_NAME"),
+		ServiceName: config.GetString("appname"),
 		RPCMetrics:  config.GetBool("rpc_metrics"),
 		tags: []opentracing.Tag{
 			{Key: "hostname", Value: hn},

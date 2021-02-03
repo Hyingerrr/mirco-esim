@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/jukylin/esim/pkg/hepler"
+
 	"github.com/jukylin/esim/core/rpcode"
 
 	"github.com/jukylin/esim/container"
@@ -63,18 +65,29 @@ func timeOutUnaryClientInterceptor(timeout time.Duration) grpc.UnaryClientInterc
 	}
 }
 
-func metricUnaryClientInterceptor() grpc.UnaryClientInterceptor {
+func metadataHandler() grpc.UnaryClientInterceptor {
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-		var (
-			beg        = time.Now()
-			serverName = container.AppName()
-		)
-
 		// set metadata
 		md, err := setClientMetadata(ctx, req)
 		if err != nil {
 			return handlerErr(err)
 		}
+
+		if len(md) > 0 {
+			ctx = metadata.NewOutgoingContext(ctx, md)
+		}
+
+		return invoker(ctx, method, req, reply, cc, opts...)
+	}
+}
+
+func metricUnaryClientInterceptor() grpc.UnaryClientInterceptor {
+	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+		var (
+			beg        = time.Now()
+			md         metadata.MD
+			serverName = container.AppName()
+		)
 
 		// merge with old matadata if exists
 		if oldmd, ok := metadata.FromOutgoingContext(ctx); ok {
@@ -84,7 +97,7 @@ func metricUnaryClientInterceptor() grpc.UnaryClientInterceptor {
 
 		logx.Infoc(ctx, "Set_Client_Metadata: %v", md)
 
-		err = invoker(ctx, method, req, reply, cc, opts...)
+		err := invoker(ctx, method, req, reply, cc, opts...)
 		rpcStatus := rpcode.ExtractCode(err)
 
 		var getAppID = func() string {
@@ -125,7 +138,53 @@ func debugUnaryClientInterceptor(slowTime time.Duration) grpc.UnaryClientInterce
 	}
 }
 
-// client
+func traceUnaryClientInterceptor() grpc.UnaryClientInterceptor {
+	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+		ip, _ := hepler.GetLocalIp()
+		// get span from parent context
+		span, ctx := opentracing.StartSpanFromContext(
+			ctx,
+			method,
+			opentracing.Tag{Key: string(ext.Component), Value: "gRPC"},
+			opentracing.Tag{Key: string(ext.PeerHostIPv4), Value: ip},
+			ext.SpanKindRPCClient,
+		)
+		defer span.Finish()
+
+		newCtx := injectSpanContext(ctx, span)
+		err := invoker(newCtx, method, req, reply, cc, opts...)
+		if err != nil {
+			code := codes.Unknown
+			if s, ok := status.FromError(err); ok {
+				code = s.Code()
+			}
+			span.SetTag("response_code", code)
+			ext.Error.Set(span, true)
+
+			span.LogFields(opentracinglog.String("event", "error"), opentracinglog.String("message", err.Error()))
+		}
+		return err
+	}
+}
+
+func injectSpanContext(ctx context.Context, span opentracing.Span) context.Context {
+	md, ok := metadata.FromOutgoingContext(ctx)
+	if !ok {
+		md = metadata.New(nil)
+	} else {
+		// 对metadata进行修改，需要用拷贝的副本进行修改
+		md = md.Copy()
+	}
+
+	carrier := tracer.MetadataReaderWriter{MD: md}
+	err := opentracing.GlobalTracer().Inject(span.Context(), opentracing.TextMap, carrier)
+	if err != nil {
+		span.LogFields(opentracinglog.String("event", "Tracer.Inject() failed"), opentracinglog.Error(err))
+	}
+
+	return metadata.NewOutgoingContext(ctx, md)
+}
+
 func setClientMetadata(ctx context.Context, req interface{}) (metadata.MD, error) {
 	var (
 		cmd     = new(meta.CommonHeader)
@@ -173,52 +232,6 @@ func setClientMetadata(ctx context.Context, req interface{}) (metadata.MD, error
 	}
 
 	return d, nil
-}
-
-func traceUnaryClientInterceptor() grpc.UnaryClientInterceptor {
-	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-		// get span from parent context
-		span, ctx := opentracing.StartSpanFromContext(
-			ctx,
-			method,
-			opentracing.Tag{Key: string(ext.Component), Value: "grpc"},
-			ext.SpanKindRPCClient,
-		)
-		defer span.Finish()
-
-		ctx = injectSpanContext(ctx)
-		err := invoker(ctx, method, req, reply, cc, opts...)
-		if err != nil {
-			code := codes.Unknown
-			if s, ok := status.FromError(err); ok {
-				code = s.Code()
-			}
-			span.SetTag("response_code", code)
-			ext.Error.Set(span, true)
-
-			span.LogFields(opentracinglog.String("event", "error"), opentracinglog.String("message", err.Error()))
-		}
-		return err
-	}
-}
-
-func injectSpanContext(ctx context.Context) context.Context {
-	clientSpan := opentracing.SpanFromContext(ctx)
-	md, ok := metadata.FromOutgoingContext(ctx)
-	if !ok {
-		md = metadata.New(nil)
-	} else {
-		// 对metadata进行修改，需要用拷贝的副本进行修改
-		md = md.Copy()
-	}
-
-	carrier := tracer.MetadataReaderWriter{MD: md}
-	err := opentracing.GlobalTracer().Inject(clientSpan.Context(), opentracing.TextMap, carrier)
-	if err != nil {
-		clientSpan.LogFields(opentracinglog.String("event", "Tracer.Inject() failed"), opentracinglog.Error(err))
-	}
-
-	return metadata.NewOutgoingContext(ctx, md)
 }
 
 func handlerErr(err error) error {

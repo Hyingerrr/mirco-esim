@@ -106,22 +106,34 @@ func metricUnaryServerInterceptor(ctx context.Context, req interface{}, info *gr
 }
 
 func traceUnaryServerInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-	span, ctx := opentracing.StartSpanFromContext(
-		ctx,
+	esimTracer := opentracing.GlobalTracer()
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		md = metadata.New(nil)
+	}
+	spCtx, err := esimTracer.Extract(opentracing.TextMap, tracer.MetadataReaderWriter{MD: md})
+	if err != nil && err != opentracing.ErrSpanContextNotFound {
+		// todo something
+		logx.Errorc(ctx, "extract from metadata err:%v", err)
+		return handler(ctx, req)
+	}
+
+	span := esimTracer.StartSpan(
 		info.FullMethod,
-		extractSpanContext(ctx),
+		ext.RPCServerOption(spCtx),
 		opentracing.Tag{Key: string(ext.Component), Value: "gRPC"},
 		ext.SpanKindRPCServer,
 	)
 	defer span.Finish()
 
-	resp, err := handler(ctx, req)
+	newCtx := opentracing.ContextWithSpan(ctx, span)
+	resp, err := handler(newCtx, req)
 	if err != nil {
 		code := codes.Unknown
 		if s, ok := status.FromError(err); ok {
 			code = s.Code()
 		}
-		span.SetTag("code", code)
+		span.SetTag("respCode", code)
 		ext.Error.Set(span, true)
 		span.LogFields(opentracinglog.String("event", "error"), opentracinglog.String("message", err.Error()))
 	}
@@ -182,15 +194,6 @@ func recoverFrom(r interface{}, fullMethod string) error {
 	return status.Errorf(codes.Unknown, "%s", r)
 }
 
-func extractSpanContext(ctx context.Context) opentracing.StartSpanOption {
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		md = metadata.New(nil)
-	}
-	spanContext, err := opentracing.GlobalTracer().Extract(opentracing.TextMap, tracer.MetadataReaderWriter{MD: md})
-	if err != nil {
-		return tracer.NullStartSpanOption{}
-	}
-
-	return ext.RPCServerOption(spanContext)
+func extractSpanContext(ctx context.Context) (opentracing.SpanContext, error) {
+	return nil, nil
 }

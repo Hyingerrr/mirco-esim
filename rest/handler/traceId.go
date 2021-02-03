@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"net/http"
-	"strconv"
 
 	"github.com/opentracing/opentracing-go/ext"
 
@@ -27,20 +26,17 @@ func TracerID() gin.HandlerFunc {
 
 func HttpTracer() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var tracer = opentracing.GlobalTracer()
-		var span opentracing.Span
-		spCtx, err := tracer.Extract(opentracing.HTTPHeaders,
-			opentracing.HTTPHeadersCarrier(c.Request.Header))
+		var (
+			span       opentracing.Span
+			esimTracer = opentracing.GlobalTracer()
+		)
+
+		spCtx, err := esimTracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(c.Request.Header))
 		if err != nil {
-			// global start
-			span = tracer.StartSpan("HTTP " + c.Request.URL.Path)
+			span = esimTracer.StartSpan("HTTP" + c.Request.URL.Path)
 			defer span.Finish()
 		} else {
-			// open tracing start
-			span = opentracing.StartSpan(
-				"HTTP "+c.Request.URL.Path,
-				opentracing.ChildOf(spCtx),
-			)
+			span = opentracing.StartSpan("HTTP"+c.Request.URL.Path, opentracing.ChildOf(spCtx))
 			defer span.Finish()
 		}
 
@@ -48,8 +44,7 @@ func HttpTracer() gin.HandlerFunc {
 		ext.HTTPUrl.Set(span, c.Request.URL.Path)
 		ext.Component.Set(span, "http")
 		ext.SpanKind.Set(span, "server")
-		ip, _ := strconv.ParseUint(c.ClientIP(), 10, 64)
-		ext.PeerHostIPv4.Set(span, uint32(ip))
+		ext.PeerHostIPv4.SetString(span, c.ClientIP())
 
 		c.Request = c.Request.WithContext(opentracing.ContextWithSpan(c.Request.Context(), span))
 		c.Next()
@@ -58,6 +53,5 @@ func HttpTracer() gin.HandlerFunc {
 		if c.Writer.Status() >= http.StatusInternalServerError {
 			ext.Error.Set(span, true)
 		}
-		span.Finish()
 	}
 }
