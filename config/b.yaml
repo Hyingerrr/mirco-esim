@@ -68,3 +68,6 @@ redis_slow_time : 50
 redis_tracer : false
 #启动metrice true/false
 redis_metrics : false
+
+# tracer collect server
+tracer_jaeger_upd: '169.254.122.159:6831'

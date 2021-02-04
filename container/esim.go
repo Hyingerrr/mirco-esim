@@ -9,7 +9,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
-	"github.com/jukylin/esim/metrics"
+	"github.com/jukylin/esim/core/metrics"
 
 	"github.com/google/wire"
 	"github.com/jukylin/esim/config"

@@ -143,3 +143,8 @@ func (c *Client) CloseIdleConnections(ctx context.Context) {
 func (c *Client) RClient() *resty.Client {
 	return c.Client
 }
+
+//
+func (c *Client) RequestPostJson(ctx context.Context, addr string, data interface{}) {
+
+}

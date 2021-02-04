@@ -51,6 +51,8 @@ type Client struct {
 	redisWriteTimeOut int64
 
 	redisConnTimeOut int64
+
+	dbIndex int // 默认0
 }
 
 type Option func(c *Client)
@@ -109,6 +111,7 @@ func NewClient(options ...Option) *Client {
 		}
 
 		onceClient.redisPassword = onceClient.conf.GetString("redis_password")
+		onceClient.dbIndex = onceClient.conf.GetInt("redis_db_index")
 
 		onceClient.redisReadTimeOut = onceClient.conf.GetInt64("redis_read_time_out")
 		if onceClient.redisReadTimeOut == 0 {
@@ -195,7 +198,7 @@ func (c *Client) initPool() {
 			}
 
 			// select db
-			_, err = conn.Do("SELECT", 0)
+			_, err = conn.Do("SELECT", c.dbIndex)
 			if err != nil {
 				c.logger.Panicf("Select err: %s", err.Error())
 				return nil, err

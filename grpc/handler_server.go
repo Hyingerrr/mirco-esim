@@ -6,6 +6,8 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/jukylin/esim/pkg/hepler"
+
 	"github.com/jukylin/esim/core/tracer"
 	"github.com/opentracing/opentracing-go/ext"
 	opentracinglog "github.com/opentracing/opentracing-go/log"
@@ -107,6 +109,7 @@ func metricUnaryServerInterceptor(ctx context.Context, req interface{}, info *gr
 
 func traceUnaryServerInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 	esimTracer := opentracing.GlobalTracer()
+	ip, _ := hepler.GetLocalIp()
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		md = metadata.New(nil)
@@ -123,6 +126,7 @@ func traceUnaryServerInterceptor(ctx context.Context, req interface{}, info *grp
 		ext.RPCServerOption(spCtx),
 		opentracing.Tag{Key: string(ext.Component), Value: "gRPC"},
 		ext.SpanKindRPCServer,
+		opentracing.Tag{Key: string(ext.PeerHostIPv4), Value: ip},
 	)
 	defer span.Finish()
 
@@ -133,10 +137,13 @@ func traceUnaryServerInterceptor(ctx context.Context, req interface{}, info *grp
 		if s, ok := status.FromError(err); ok {
 			code = s.Code()
 		}
-		span.SetTag("respCode", code)
+		span.SetTag("gRPC_code", code)
 		ext.Error.Set(span, true)
 		span.LogFields(opentracinglog.String("event", "error"), opentracinglog.String("message", err.Error()))
 	}
+
+	span.SetTag("gRPC_code", codes.OK)
+
 	return resp, err
 }
 

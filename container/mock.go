@@ -3,8 +3,8 @@ package container
 import (
 	"github.com/google/wire"
 	"github.com/jukylin/esim/config"
+	"github.com/jukylin/esim/core/metrics"
 	"github.com/jukylin/esim/core/tracer"
-	"github.com/jukylin/esim/metrics"
 )
 
 func provideMockConf() config.Config {

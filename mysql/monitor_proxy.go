@@ -162,7 +162,7 @@ func (mp *MonitorProxy) withSlowSQL(query string, beginTime, endTime time.Time) 
 
 func (mp *MonitorProxy) withMysqlMetrics(query string, beginTime, endTime time.Time) {
 	// 阿里云dms后台可以看的很详细
-	// sql太多，防止metric被打爆
+	// sql太多，防止内存被打爆, 需要收敛metric
 
 	//mysqlDBTotal.Inc(container.GetServiceName(), query)
 	//mysqlDBDuration.Observe(endTime.Sub(beginTime).Seconds(), container.GetServiceName(), query)

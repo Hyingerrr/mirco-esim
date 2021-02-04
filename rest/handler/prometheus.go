@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/jukylin/esim/core/meta"
-	"github.com/jukylin/esim/metrics"
+	"github.com/jukylin/esim/core/metrics"
 )
 
 // request_total.

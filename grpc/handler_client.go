@@ -158,11 +158,12 @@ func traceUnaryClientInterceptor() grpc.UnaryClientInterceptor {
 			if s, ok := status.FromError(err); ok {
 				code = s.Code()
 			}
-			span.SetTag("response_code", code)
+			span.SetTag("gRPC_code", code)
 			ext.Error.Set(span, true)
 
 			span.LogFields(opentracinglog.String("event", "error"), opentracinglog.String("message", err.Error()))
 		}
+		span.SetTag("gRPC_code", codes.OK)
 		return err
 	}
 }

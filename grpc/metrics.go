@@ -2,7 +2,7 @@ package grpc
 
 import (
 	"github.com/jukylin/esim/core/meta"
-	"github.com/jukylin/esim/metrics"
+	"github.com/jukylin/esim/core/metrics"
 )
 
 var (

@@ -7,7 +7,7 @@ import (
 
 	"github.com/jukylin/esim/core/meta"
 
-	"github.com/jukylin/esim/metrics"
+	"github.com/jukylin/esim/core/metrics"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )

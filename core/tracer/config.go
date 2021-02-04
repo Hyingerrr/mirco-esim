@@ -24,7 +24,6 @@ type Config struct {
 }
 
 func initDefaultConfig() *Config {
-	agentAddr := "127.0.0.1:6831"
 	hn, _ := os.Hostname()
 	return &Config{
 		ServiceName: config.GetString("appname"),
@@ -43,7 +42,7 @@ func initDefaultConfig() *Config {
 		Reporter: &jconfig.ReporterConfig{
 			BufferFlushInterval: time.Second,
 			LogSpans:            false,
-			LocalAgentHostPort:  agentAddr,
+			LocalAgentHostPort:  config.GetString("tracer_jaeger_upd"),
 		},
 		Headers: &jaeger.HeadersConfig{
 			TraceContextHeaderName:   "x-trace-id",

@@ -40,6 +40,10 @@ type Client struct {
 
 	// for integration tests
 	db *sql.DB
+
+	traceOnce sync.Once
+
+	lock sync.Mutex
 }
 
 type Option func(c *Client)
@@ -196,6 +200,8 @@ func (c *Client) init() {
 }
 
 func (c *Client) setDb(dbName string, gdb *gorm.DB, db *sql.DB) {
+	c.lock.Lock()
+	defer c.lock.Unlock()
 	dbName = strings.ToLower(dbName)
 
 	c.gdbs[dbName] = gdb
@@ -207,14 +213,21 @@ func (c *Client) GetDb(dbName string) *gorm.DB {
 }
 
 func (c *Client) getDb(ctx context.Context, dbName string) *gorm.DB {
-	dbName = strings.ToLower(dbName)
-	if db, ok := c.gdbs[dbName]; ok {
-		// 对象注册监控回调
-		c.RegisterMetricsCallbacks(ctx, db)
+	if db, ok := c.gdbs[strings.ToLower(dbName)]; ok {
+		// inject monitor
+		if c.conf.GetBool("mysql_metric") {
+			c.RegisterMetricsCallbacks(ctx, db)
+		}
+
+		// inject tracer
+		if c.conf.GetBool("mysql_tracer") {
+			db = c.Trace(ctx, db).DB
+		}
+
 		return db
 	}
 
-	c.logger.Errorf("[db] %s not found", dbName)
+	c.logger.Errorc(ctx, "[db] %s not found", dbName)
 
 	return nil
 }

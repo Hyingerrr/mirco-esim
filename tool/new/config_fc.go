@@ -168,6 +168,9 @@ redis_slow_time : 50
 redis_tracer : {{.Monitoring}}
 #启动metrice true/false
 redis_metrics : {{.Monitoring}}
+
+# tracer collect server
+tracer_jaeger_upd: ':6831'
 `,
 	}
 )

@@ -51,7 +51,8 @@ func NewClientOptions(options ...ClientOptional) *ClientOptions {
 			PermitWithoutStream: c.config.PermitWithoutStream,
 		}),
 		grpc.WithChainUnaryInterceptor(
-			timeOutUnaryClientInterceptor(c.config.Timeout), metadataHandler()),
+			//timeOutUnaryClientInterceptor(c.config.Timeout), metadataHandler()),
+			metadataHandler()),
 	}
 
 	if c.config.Debug {
