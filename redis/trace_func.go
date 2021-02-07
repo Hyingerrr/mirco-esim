@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/gomodule/redigo/redis"
-
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 )
@@ -14,6 +13,10 @@ import (
 func (c *Client) Do(ctx context.Context, command string, args ...interface{}) (interface{}, error) {
 	redisConn := c.GetCtxRedisConn()
 	defer redisConn.Close()
+
+	if !c.conf.GetBool("redis_tracer") {
+		return redisConn.Do(ctx, command, args...)
+	}
 
 	tc := c.withTrace(ctx)
 	statement := getStatement(command, args...)

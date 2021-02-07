@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jukylin/esim/pkg/hepler"
-
 	"github.com/jukylin/esim/core/rpcode"
 
 	"github.com/jukylin/esim/container"
@@ -140,13 +138,11 @@ func debugUnaryClientInterceptor(slowTime time.Duration) grpc.UnaryClientInterce
 
 func traceUnaryClientInterceptor() grpc.UnaryClientInterceptor {
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-		ip, _ := hepler.GetLocalIp()
-		// get span from parent context
 		span, ctx := opentracing.StartSpanFromContext(
 			ctx,
 			method,
-			opentracing.Tag{Key: string(ext.Component), Value: "gRPC"},
-			opentracing.Tag{Key: string(ext.PeerHostIPv4), Value: ip},
+			tracer.TagComponent("gRPC"),
+			tracer.TagLocalIPV4(),
 			ext.SpanKindRPCClient,
 		)
 		defer span.Finish()

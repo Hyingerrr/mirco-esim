@@ -39,7 +39,6 @@ func (c *Client) IncrBy(ctx context.Context, key string, step int) (int, error) 
 // ------------------------------------------------------------ //
 // --------------------------- HASH ------------------------- //
 // ----------------------------------------------------------- //
-// SET
 func (c *Client) HSet(ctx context.Context, key string, field string, val interface{}) error {
 	value, err := c.encode(val)
 	if err != nil {

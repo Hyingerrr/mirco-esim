@@ -5,6 +5,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/jukylin/esim/core/tracer"
+	"github.com/opentracing/opentracing-go/ext"
+
 	mq_http_sdk "github.com/aliyunmq/mq-http-go-sdk"
 	"github.com/gogap/errors"
 	"github.com/jukylin/esim/config"
@@ -250,6 +253,9 @@ func (se *SubscribeEngine) Start() {
 					var handles []string
 					se.logger.Debugf("Consume [%d] messages---->", len(resp.Messages))
 
+					tcSpan := se.withTraceRootSpan()
+					defer tcSpan.Finish()
+
 					for _, v := range resp.Messages {
 						se.logger.Infof("Receive MessageID: [%s], PublishTime: [%d], MessageTag: [%s] "+
 							" ConsumedTimes: [%d], FirstConsumeTime: [%d], NextConsumeTime: [%d]",
@@ -258,10 +264,21 @@ func (se *SubscribeEngine) Start() {
 						se.logger.Debugf("Receive MessageID: [%s], PublishTime: [%d], MessageTag: [%s], MessageBody[%s], MessageKey[%v]",
 							v.MessageId, v.PublishTime, v.MessageTag, v.MessageBody, v.MessageKey)
 
+						ext.Component.Set(tcSpan, v.MessageId)
+						tracer.CustomTag("mq.service", "RocketMQ").Set(tcSpan)
+						tracer.CustomTag("mq.topic", sub.topicName).Set(tcSpan)
+						tracer.CustomTag("mq.consumer_group", sub.groupID).Set(tcSpan)
+						tracer.CustomTag("mq.msg_tag", v.MessageTag).Set(tcSpan)
+						ext.SpanKindConsumer.Set(tcSpan)
+
 						consumerMsg := &ConsumeMessage{v}
 						consumerAck := &ConsumeMessageAck{}
 						err := se.handleConsumeMsg(sub, consumerMsg, consumerAck)
 						if err != nil {
+							ext.Error.Set(tcSpan, true)
+							ext.MessageBusDestination.Set(tcSpan, err.Error())
+							tcSpan.LogKV("event", "error", "message", err.Error())
+
 							se.logger.Errorf("handleConsumeMsg 处理失败[%s][%s]下次接收时间[%d]",
 								v.Message, v.MessageBody, v.NextConsumeTime)
 							continue

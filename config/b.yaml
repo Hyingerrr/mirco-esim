@@ -71,3 +71,6 @@ redis_metrics : false
 
 # tracer collect server
 tracer_jaeger_upd: '169.254.122.159:6831'
+
+# mq publisher trace
+mq_publisher_trace: true

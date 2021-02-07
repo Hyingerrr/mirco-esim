@@ -181,12 +181,12 @@ func (mp *MonitorProxy) after(ctx context.Context, execInfo *execInfo) {
 }
 
 func (mp *MonitorProxy) redisTracer(ctx context.Context, info *execInfo) {
-	span := opentracing.GetSpan(ctx, mp.tracer, info.commandName, info.startTime)
-	if info.err != nil {
-		span.SetTag("error", true)
-		span.LogKV("error_detailed", info.err.Error())
-	}
-	span.FinishWithOptions(opentracing2.FinishOptions{FinishTime: info.endTime})
+	//span := opentracing.GetSpan(ctx, mp.tracer, info.commandName, info.startTime)
+	//if info.err != nil {
+	//	span.SetTag("error", true)
+	//	span.LogKV("error_detailed", info.err.Error())
+	//}
+	//span.FinishWithOptions(opentracing2.FinishOptions{FinishTime: info.endTime})
 }
 
 func (mp *MonitorProxy) redisSlowCommand(ctx context.Context, info *execInfo) {

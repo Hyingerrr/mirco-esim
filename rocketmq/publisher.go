@@ -1,7 +1,13 @@
 package rocketmq
 
 import (
+	"context"
 	"time"
+
+	"github.com/opentracing/opentracing-go/ext"
+
+	"github.com/jukylin/esim/core/tracer"
+	"github.com/opentracing/opentracing-go"
 
 	mq_http_sdk "github.com/aliyunmq/mq-http-go-sdk"
 	"github.com/jukylin/esim/config"
@@ -14,6 +20,8 @@ type Publisher struct {
 	logger log.Logger
 
 	conf config.Config
+
+	allowTracer bool
 }
 
 type PublisherOption func(*Publisher)
@@ -33,6 +41,8 @@ func NewPublisher(options ...PublisherOption) *Publisher {
 	if p.logger == nil {
 		p.logger = log.NewLogger()
 	}
+
+	p.allowTracer = p.conf.GetBool("mq_publisher_trace")
 
 	/*初始化客户端*/
 	var cliOpt MQClientOptions
@@ -54,80 +64,109 @@ func WithPublisherLogger(logger log.Logger) PublisherOption {
 	}
 }
 
-func (p *Publisher) PublishMessage(topicName, messageBody string) error {
+func (p *Publisher) PublishMessage(ctx context.Context, topicName, messageBody string) error {
 	msg := mq_http_sdk.PublishMessageRequest{
 		MessageBody: messageBody,
 	}
-	return p.publish(topicName, msg)
+	return p.publish(ctx, topicName, msg)
 }
 
 // with message tag and key
-func (p *Publisher) PublishMsgWithTag(topicName, messageBody, messageTag string) error {
+func (p *Publisher) PublishMsgWithTag(ctx context.Context, topicName, messageBody, messageTag string) error {
 	msg := mq_http_sdk.PublishMessageRequest{
 		MessageBody: messageBody,
 		MessageTag:  messageTag,
 	}
-	return p.publish(topicName, msg)
+	return p.publish(ctx, topicName, msg)
 }
 
 // with message tag
-func (p *Publisher) PublishMsgWithKeyTag(topicName, messageBody, messageTag, messageKey string) error {
+func (p *Publisher) PublishMsgWithKeyTag(ctx context.Context, topicName, messageBody, messageTag, messageKey string) error {
 	msg := mq_http_sdk.PublishMessageRequest{
 		MessageBody: messageBody,
 		MessageTag:  messageTag,
 		MessageKey:  messageKey,
 	}
-	return p.publish(topicName, msg)
+	return p.publish(ctx, topicName, msg)
 }
 
-func (p *Publisher) PublishDelayMessage(topicName, messageBody string, delay time.Duration) error {
+func (p *Publisher) PublishDelayMessage(ctx context.Context, topicName, messageBody string, delay time.Duration) error {
 	msg := mq_http_sdk.PublishMessageRequest{
 		MessageBody:      messageBody,
 		StartDeliverTime: time.Now().Add(delay).UTC().Unix() * 1000, //值为毫秒级别的Unix时间戳
 	}
-	return p.publish(topicName, msg)
+	return p.publish(ctx, topicName, msg)
 }
 
-func (p *Publisher) PublishDelayMsgWithTag(topicName, messageBody, messageTag string, delay time.Duration) error {
+func (p *Publisher) PublishDelayMsgWithTag(ctx context.Context, topicName, messageBody, messageTag string, delay time.Duration) error {
 	msg := mq_http_sdk.PublishMessageRequest{
 		MessageBody:      messageBody,
 		MessageTag:       messageTag,
 		StartDeliverTime: time.Now().Add(delay).UTC().Unix() * 1000, //值为毫秒级别的Unix时间戳
 	}
-	return p.publish(topicName, msg)
+	return p.publish(ctx, topicName, msg)
 }
 
-func (p *Publisher) PublishDelayMsgWithKeyTag(topicName, messageBody, messageTag, messageKey string, delay time.Duration) error {
+func (p *Publisher) PublishDelayMsgWithKeyTag(ctx context.Context, topicName, messageBody, messageTag, messageKey string, delay time.Duration) error {
 	msg := mq_http_sdk.PublishMessageRequest{
 		MessageBody:      messageBody,
 		MessageTag:       messageTag,
 		MessageKey:       messageKey,
 		StartDeliverTime: time.Now().Add(delay).UTC().Unix() * 1000, //值为毫秒级别的Unix时间戳
 	}
-	return p.publish(topicName, msg)
+	return p.publish(ctx, topicName, msg)
 }
 
-func (p *Publisher) PublishMessageProp(topicName, messageTag, messageBody string, properties map[string]string) error {
+func (p *Publisher) PublishMessageProp(ctx context.Context, topicName, messageTag, messageBody string, properties map[string]string) error {
 	msg := mq_http_sdk.PublishMessageRequest{
 		MessageBody: messageBody,
 		MessageTag:  messageTag, // 消息标签
 		Properties:  properties,
 	}
-	return p.publish(topicName, msg)
+	return p.publish(ctx, topicName, msg)
 }
 
-func (p *Publisher) PublishDelayMessageProt(topicName, messageBody string, properties map[string]string, delay time.Duration) error {
+func (p *Publisher) PublishDelayMessageProt(ctx context.Context, topicName, messageBody string, properties map[string]string, delay time.Duration) error {
 	msg := mq_http_sdk.PublishMessageRequest{
 		MessageBody:      messageBody,
 		Properties:       properties,
 		StartDeliverTime: time.Now().Add(delay).UTC().Unix() * 1000, //值为毫秒级别的Unix时间戳
 	}
-	return p.publish(topicName, msg)
+	return p.publish(ctx, topicName, msg)
 }
 
-func (p *Publisher) publish(topicName string, msg mq_http_sdk.PublishMessageRequest) error {
-	mqProducer := p.client.Producer(topicName)
-	resp, err := mqProducer.PublishMessage(msg)
+func (p *Publisher) publish(ctx context.Context, topicName string, msg mq_http_sdk.PublishMessageRequest) (err error) {
+	var resp mq_http_sdk.PublishMessageResponse
+	{
+		if !p.allowTracer {
+			goto Next
+		}
+
+		tc := p.withTrace(ctx)
+		childSpan := tc.tracer.StartSpan(
+			"RocketMQ_publisher",
+			opentracing.ChildOf(tc.spanCtx),
+		)
+
+		defer func() {
+			if err != nil {
+				ext.Error.Set(childSpan, true)
+				ext.MessageBusDestination.Set(childSpan, err.Error())
+				childSpan.LogKV("event", "error", "message", err.Error())
+			} else {
+				ext.Component.Set(childSpan, resp.MessageId)
+			}
+			childSpan.Finish()
+		}()
+
+		tracer.CustomTag("mq.service", "RocketMQ").Set(childSpan)
+		tracer.CustomTag("mq.topic", topicName).Set(childSpan)
+		tracer.CustomTag("mq.msg_tag", msg.MessageTag).Set(childSpan)
+		ext.SpanKindProducer.Set(childSpan)
+	}
+
+Next:
+	resp, err = p.client.Producer(topicName).PublishMessage(msg)
 	if err != nil {
 		p.logger.Errorf("发布信息失败[%][%s]:[%s]", topicName, err)
 		return err

@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jukylin/esim/core/tracer"
+
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 
@@ -64,7 +66,8 @@ func (c *Client) RegisterTraceCallbacks(db *gorm.DB) {
 			}
 			spanner := ctx.StartSpan("CREATE",
 				opentracing.ChildOf(ctx.spanCtx),
-				opentracing.Tag{Key: "db.schema", Value: scope.Dialect().CurrentDatabase()},
+				tracer.TagDbSchema(scope.Dialect().CurrentDatabase()),
+				tracer.TagStartTime(),
 			)
 			ext.SpanKindRPCClient.Set(spanner)
 			ext.PeerService.Set(spanner, "mysql")
@@ -84,7 +87,6 @@ func (c *Client) RegisterTraceCallbacks(db *gorm.DB) {
 			if !ok {
 				return
 			}
-			defer spanner.Finish()
 
 			if scope.HasError() {
 				ext.DBStatement.Set(spanner, fmt.Sprintf("%v", scope.DB().QueryExpr()))
@@ -93,6 +95,8 @@ func (c *Client) RegisterTraceCallbacks(db *gorm.DB) {
 			} else {
 				ext.DBStatement.Set(spanner, scope.SQL)
 			}
+
+			spanner.FinishWithOptions(tracer.TagFinishTime())
 		})
 
 		// for update
@@ -109,7 +113,8 @@ func (c *Client) RegisterTraceCallbacks(db *gorm.DB) {
 
 			spanner := ctx.StartSpan("UPDATE",
 				opentracing.ChildOf(ctx.spanCtx),
-				opentracing.Tag{Key: "db.schema", Value: scope.Dialect().CurrentDatabase()},
+				tracer.TagDbSchema(scope.Dialect().CurrentDatabase()),
+				tracer.TagStartTime(),
 			)
 			ext.SpanKindRPCClient.Set(spanner)
 			ext.PeerService.Set(spanner, "mysql")
@@ -129,7 +134,6 @@ func (c *Client) RegisterTraceCallbacks(db *gorm.DB) {
 			if !ok {
 				return
 			}
-			defer spanner.Finish()
 
 			if scope.HasError() {
 				ext.DBStatement.Set(spanner, fmt.Sprintf("%v", scope.DB().QueryExpr()))
@@ -139,6 +143,8 @@ func (c *Client) RegisterTraceCallbacks(db *gorm.DB) {
 			} else {
 				ext.DBStatement.Set(spanner, scope.SQL)
 			}
+
+			spanner.FinishWithOptions(tracer.TagFinishTime())
 		})
 
 		// for query
@@ -155,7 +161,8 @@ func (c *Client) RegisterTraceCallbacks(db *gorm.DB) {
 
 			spanner := ctx.StartSpan("QUERY",
 				opentracing.ChildOf(ctx.spanCtx),
-				opentracing.Tag{Key: "db.schema", Value: scope.Dialect().CurrentDatabase()},
+				tracer.TagDbSchema(scope.Dialect().CurrentDatabase()),
+				tracer.TagStartTime(),
 			)
 			ext.SpanKindRPCClient.Set(spanner)
 			ext.PeerService.Set(spanner, "mysql")
@@ -175,7 +182,6 @@ func (c *Client) RegisterTraceCallbacks(db *gorm.DB) {
 			if !ok {
 				return
 			}
-			defer spanner.Finish()
 
 			if scope.HasError() && scope.DB().Error != gorm.ErrRecordNotFound {
 				ext.DBStatement.Set(spanner, fmt.Sprintf("%v", scope.DB().QueryExpr()))
@@ -185,6 +191,8 @@ func (c *Client) RegisterTraceCallbacks(db *gorm.DB) {
 			} else {
 				ext.DBStatement.Set(spanner, scope.SQL)
 			}
+
+			spanner.FinishWithOptions(tracer.TagFinishTime())
 		})
 
 		// for raw
@@ -215,7 +223,8 @@ func (c *Client) RegisterTraceCallbacks(db *gorm.DB) {
 
 			spanner := ctx.StartSpan(name,
 				opentracing.ChildOf(ctx.spanCtx),
-				opentracing.Tag{Key: "db.schema", Value: scope.Dialect().CurrentDatabase()},
+				tracer.TagDbSchema(scope.Dialect().CurrentDatabase()),
+				tracer.TagStartTime(),
 			)
 			ext.SpanKindRPCClient.Set(spanner)
 			ext.PeerService.Set(spanner, "mysql")
@@ -224,6 +233,7 @@ func (c *Client) RegisterTraceCallbacks(db *gorm.DB) {
 
 			scope.InstanceSet(OpenTracingSpanContextKey, spanner)
 		})
+
 		db.Callback().RowQuery().After("gorm:row_query").Register("esim:trace_after_sql", func(scope *gorm.Scope) {
 			iface, ok := scope.InstanceGet(OpenTracingSpanContextKey)
 			if !ok {
@@ -234,7 +244,6 @@ func (c *Client) RegisterTraceCallbacks(db *gorm.DB) {
 			if !ok {
 				return
 			}
-			defer spanner.Finish()
 
 			if scope.HasError() {
 				ext.DBStatement.Set(spanner, scope.SQL)
@@ -243,6 +252,8 @@ func (c *Client) RegisterTraceCallbacks(db *gorm.DB) {
 			} else {
 				ext.DBStatement.Set(spanner, scope.SQL)
 			}
+
+			spanner.FinishWithOptions(tracer.TagFinishTime())
 		})
 
 		// for delete
@@ -259,7 +270,8 @@ func (c *Client) RegisterTraceCallbacks(db *gorm.DB) {
 
 			spanner := ctx.StartSpan("DELETE",
 				opentracing.ChildOf(ctx.spanCtx),
-				opentracing.Tag{Key: "db.schema", Value: scope.Dialect().CurrentDatabase()},
+				tracer.TagDbSchema(scope.Dialect().CurrentDatabase()),
+				tracer.TagStartTime(),
 			)
 			ext.SpanKindRPCClient.Set(spanner)
 			ext.PeerService.Set(spanner, "mysql")
@@ -268,6 +280,7 @@ func (c *Client) RegisterTraceCallbacks(db *gorm.DB) {
 
 			scope.InstanceSet(OpenTracingSpanContextKey, spanner)
 		})
+
 		db.Callback().Delete().After("gorm:after_delete").Register("esim:trace_after_delete", func(scope *gorm.Scope) {
 			iface, ok := scope.InstanceGet(OpenTracingSpanContextKey)
 			if !ok {
@@ -278,7 +291,6 @@ func (c *Client) RegisterTraceCallbacks(db *gorm.DB) {
 			if !ok {
 				return
 			}
-			defer spanner.Finish()
 
 			if scope.HasError() {
 				ext.DBStatement.Set(spanner, fmt.Sprintf("%v", scope.DB().QueryExpr()))
@@ -287,6 +299,8 @@ func (c *Client) RegisterTraceCallbacks(db *gorm.DB) {
 			} else {
 				ext.DBStatement.Set(spanner, scope.SQL)
 			}
+
+			spanner.FinishWithOptions(tracer.TagFinishTime())
 		})
 	})
 }
