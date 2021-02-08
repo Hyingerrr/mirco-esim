@@ -1,6 +1,7 @@
 package rocketmq
 
 import (
+	"context"
 	"math"
 	"sync"
 	"time"
@@ -31,6 +32,9 @@ type Context struct {
 
 	// Errors is a list of errors attached to all the handlers/middlewares who used this context.
 	Errors errorMsgs
+
+	// ctx store the tracer ctx
+	rCtx context.Context
 }
 
 /************************************/
@@ -49,6 +53,7 @@ func (c *Context) reset() {
 	c.Keys = nil
 	c.Errors = c.Errors[0:0]
 
+	c.rCtx = context.Background()
 }
 
 // Copy returns a copy of the current context that can be safely used outside the request's scope.
@@ -57,6 +62,7 @@ func (c *Context) Copy() *Context {
 	cp := Context{
 		consumeMsg: c.consumeMsg,
 		engine:     c.engine,
+		rCtx:       c.rCtx,
 	}
 	cp.consumeAck = nil
 	cp.index = abortIndex
@@ -91,6 +97,10 @@ func (c *Context) Handler() HandlerFunc {
 
 func (c *Context) Topic() string {
 	return c.topic
+}
+
+func (c *Context) Context() context.Context {
+	return c.rCtx
 }
 
 /************************************/

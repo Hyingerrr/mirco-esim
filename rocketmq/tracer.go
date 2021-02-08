@@ -38,11 +38,9 @@ type TraceSubscriber struct {
 	tracer opentracing.Tracer
 }
 
-func (se *SubscribeEngine) withTraceRootSpan() opentracing.Span {
-	tc := &TraceSubscriber{
+func (se *SubscribeEngine) withTraceRootSpan() *TraceSubscriber {
+	return &TraceSubscriber{
 		SubscribeEngine: se,
 		tracer:          opentracing.GlobalTracer(),
 	}
-
-	return tc.tracer.StartSpan("RocketMQ_Subscriber")
 }

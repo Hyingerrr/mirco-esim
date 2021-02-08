@@ -64,5 +64,3 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	gopkg.in/yaml.v2 v2.3.0
 )
-
-replace github.com/jukylin/esim => ../esim

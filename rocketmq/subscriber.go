@@ -5,6 +5,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/opentracing/opentracing-go"
+
 	"github.com/jukylin/esim/core/tracer"
 	"github.com/opentracing/opentracing-go/ext"
 
@@ -213,7 +215,7 @@ func (se *SubscribeEngine) combineHandlers(handlers HandlersChain) HandlersChain
 	return mergedHandlers
 }
 
-func (se *SubscribeEngine) handleConsumeMsg(subInfo *Subscriber, msg *ConsumeMessage, ack *ConsumeMessageAck) error {
+func (se *SubscribeEngine) handleConsumeMsg(subInfo *Subscriber, msg *ConsumeMessage, ack *ConsumeMessageAck, span opentracing.Span) error {
 	c := se.pool.Get().(*Context)
 	defer se.pool.Put(c)
 
@@ -222,6 +224,8 @@ func (se *SubscribeEngine) handleConsumeMsg(subInfo *Subscriber, msg *ConsumeMes
 	c.consumeAck = ack
 	c.subscriber = subInfo
 	c.handlers = subInfo.handlersChain
+	// todo
+	c.rCtx = opentracing.ContextWithSpan(c.rCtx, span)
 
 	//调用链
 	c.Next()
@@ -253,8 +257,8 @@ func (se *SubscribeEngine) Start() {
 					var handles []string
 					se.logger.Debugf("Consume [%d] messages---->", len(resp.Messages))
 
-					tcSpan := se.withTraceRootSpan()
-					defer tcSpan.Finish()
+					tracerSubscribe := se.withTraceRootSpan()
+					tcSpan := tracerSubscribe.tracer.StartSpan("Rocket_Consumer")
 
 					for _, v := range resp.Messages {
 						se.logger.Infof("Receive MessageID: [%s], PublishTime: [%d], MessageTag: [%s] "+
@@ -273,7 +277,7 @@ func (se *SubscribeEngine) Start() {
 
 						consumerMsg := &ConsumeMessage{v}
 						consumerAck := &ConsumeMessageAck{}
-						err := se.handleConsumeMsg(sub, consumerMsg, consumerAck)
+						err := se.handleConsumeMsg(sub, consumerMsg, consumerAck, tcSpan)
 						if err != nil {
 							ext.Error.Set(tcSpan, true)
 							ext.MessageBusDestination.Set(tcSpan, err.Error())

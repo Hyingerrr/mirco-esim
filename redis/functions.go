@@ -20,6 +20,10 @@ func (c *Client) GetBytes(ctx context.Context, key string) ([]byte, error) {
 	return redis.Bytes(c.Do(ctx, "GET", key))
 }
 
+func (c *Client) GetInt(ctx context.Context, key string) (int, error) {
+	return redis.Int(c.Do(ctx, "GET", key))
+}
+
 // SET, expiration 单位s, 0永久
 func (c *Client) Set(ctx context.Context, key string, val interface{}, expiration int64) error {
 	if expiration < 0 {
