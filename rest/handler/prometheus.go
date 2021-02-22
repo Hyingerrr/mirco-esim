@@ -28,7 +28,7 @@ var responseStatus = metrics.CreateMetricCount(
 	"http_response_status",
 	[]string{meta.ServiceName, meta.Uri, meta.TranCd, "status"}...)
 
-func HttpMonitor() gin.HandlerFunc {
+func HttpMonitorHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var (
 			start       = time.Now()

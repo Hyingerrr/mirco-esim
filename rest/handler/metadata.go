@@ -10,7 +10,7 @@ import (
 	"github.com/jukylin/esim/core/meta"
 )
 
-func SetMetadata() gin.HandlerFunc {
+func MetadataHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		metadata := new(meta.CommonParams)
 		reqBuf, err := c.GetRawData()
