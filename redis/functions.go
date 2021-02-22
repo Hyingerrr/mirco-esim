@@ -37,7 +37,7 @@ func (c *Client) Set(ctx context.Context, key string, val interface{}, expiratio
 
 // INCRBY
 func (c *Client) IncrBy(ctx context.Context, key string, step int) (int, error) {
-	return redis.Int(c.Do(ctx, "INCR", key, step))
+	return redis.Int(c.Do(ctx, "INCRBY", key, step))
 }
 
 // ------------------------------------------------------------ //
