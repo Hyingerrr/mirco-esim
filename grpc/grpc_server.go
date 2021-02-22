@@ -6,7 +6,6 @@ import (
 	"google.golang.org/grpc/keepalive"
 
 	logx "github.com/jukylin/esim/log"
-	opentracing2 "github.com/opentracing/opentracing-go"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -18,8 +17,6 @@ type Server struct {
 	interceptors []grpc.UnaryServerInterceptor
 
 	opts []grpc.ServerOption
-
-	tracer opentracing2.Tracer
 
 	config *ServerConfig
 }
@@ -33,10 +30,6 @@ func NewServer(options ...ServerOption) *Server {
 
 	for _, option := range options {
 		option(s)
-	}
-
-	if s.tracer == nil {
-		s.tracer = opentracing2.NoopTracer{}
 	}
 
 	// set default config
@@ -89,12 +82,6 @@ func (ServerOptions) WithUnarySrvItcp(options ...grpc.UnaryServerInterceptor) Se
 func (ServerOptions) WithServerOption(options ...grpc.ServerOption) ServerOption {
 	return func(g *Server) {
 		g.opts = options
-	}
-}
-
-func (ServerOptions) WithTracer(tracer opentracing2.Tracer) ServerOption {
-	return func(g *Server) {
-		g.tracer = tracer
 	}
 }
 
