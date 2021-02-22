@@ -116,19 +116,32 @@ func NewGinServer(app *{{.PackageName}}.App) *GinServer {
 		port = ":"+port
 	}
 
-	rGin := rest.NewGinEngine()
-
-	// MUST: middleware metadata must before the monitor
-	rGin.Use(handler.SetMetadata())
-
-	server := &GinServer{
-		en : rGin.Gine(),
-		addr : port,
-		logger: app.Logger,
-		app: app,
+	// set env
+	mode := xenv.SetRunMode(app.Conf.GetString("runmode"))
+	if !mode.IsValid() {
+		app.Logger.Panicf("RunMode InValid")
 	}
 
-	return server
+	if xenv.IsPro() {
+		gin.SetMode(gin.ReleaseMode)
+	} else {
+		gin.SetMode(gin.DebugMode)
+	}
+
+	en := gin.Default()
+
+	en.Use(handler.Recover(), handler.TracerID())
+
+	// MUST: middleware metadata must before the monitor
+	if app.Conf.GetBool("http_metrics") {
+		en.Use(handler.SetMetadata(), handler.HttpMonitor())
+	}
+
+	if app.Conf.GetBool("http_tracer") {
+		en.Use(handler.HttpTracer())
+	}
+
+	return &GinServer{en : en,addr : port,logger: app.Logger,app: app}
 }
 
 
