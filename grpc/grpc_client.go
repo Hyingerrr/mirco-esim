@@ -106,7 +106,7 @@ func (gc *Client) Close() {
 
 type TimeoutCallOption struct {
 	*grpc.EmptyCallOption
-	Timeout time.Duration
+	Timeout time.Duration // ms
 }
 
 func WithTimeout(timeout time.Duration) *TimeoutCallOption {

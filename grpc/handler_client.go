@@ -47,9 +47,9 @@ func timeOutUnaryClientInterceptor(timeout time.Duration) grpc.UnaryClientInterc
 			}
 		}
 		if timeOpt != nil && timeOpt.Timeout > 0 {
-			ctx, cancel = context.WithTimeout(ctx, timeOpt.Timeout)
+			ctx, cancel = context.WithTimeout(ctx, timeOpt.Timeout/1000)
 		} else {
-			ctx, cancel = context.WithTimeout(ctx, timeout)
+			ctx, cancel = context.WithTimeout(ctx, timeout/1000)
 		}
 		defer cancel()
 

@@ -51,8 +51,6 @@ func NewServer(options ...ServerOption) *Server {
 	s.server = grpc.NewServer(baseOpts...)
 
 	s.Use(recoverServerInterceptor(), tracerIDServerInterceptor())
-	// timeout
-	s.Use(timeoutUnaryServerInterceptor(s.config.Timeout))
 
 	if s.config.Debug {
 		s.Use(debugUnaryServerInterceptor(s.config.SlowTime))
@@ -69,6 +67,9 @@ func NewServer(options ...ServerOption) *Server {
 	if s.config.Metrics {
 		s.Use(metricUnaryServerInterceptor)
 	}
+
+	// timeout
+	s.Use(timeoutUnaryServerInterceptor(s.config.Timeout))
 
 	return s
 }
