@@ -6,23 +6,17 @@ import (
 	"google.golang.org/grpc/keepalive"
 
 	logx "github.com/jukylin/esim/log"
-	"github.com/jukylin/esim/opentracing"
-	opentracing2 "github.com/opentracing/opentracing-go"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
 
 type Client struct {
-	conn *grpc.ClientConn
-
+	conn       *grpc.ClientConn
 	clientOpts *ClientOptions
 }
 
 type ClientOptions struct {
-	tracer opentracing2.Tracer
-
-	opts []grpc.DialOption
-
+	opts   []grpc.DialOption
 	config *ClientConfig
 }
 
@@ -37,10 +31,6 @@ func NewClientOptions(options ...ClientOptional) *ClientOptions {
 		option(c)
 	}
 
-	if c.tracer == nil {
-		c.tracer = opentracing.NewTracer("grpc_client", logx.NewLogger())
-	}
-
 	c.setClientConfig()
 
 	opts := []grpc.DialOption{
@@ -51,8 +41,7 @@ func NewClientOptions(options ...ClientOptional) *ClientOptions {
 			PermitWithoutStream: c.config.PermitWithoutStream,
 		}),
 		grpc.WithChainUnaryInterceptor(
-			//timeOutUnaryClientInterceptor(c.config.Timeout), metadataHandler()),
-			metadataHandler()),
+			timeOutUnaryClientInterceptor(c.config.Timeout), metadataHandler()),
 	}
 
 	if c.config.Debug {
@@ -73,12 +62,6 @@ func NewClientOptions(options ...ClientOptional) *ClientOptions {
 	c.opts = append(c.opts, opts...)
 
 	return c
-}
-
-func (ClientOptionals) WithTracer(tracer opentracing2.Tracer) ClientOptional {
-	return func(g *ClientOptions) {
-		g.tracer = tracer
-	}
 }
 
 func (ClientOptionals) WithDialOptions(options ...grpc.DialOption) ClientOptional {

@@ -1,13 +1,9 @@
 package container
 
 import (
-	"net/http"
-	"strings"
 	"sync"
 
 	"github.com/jukylin/esim/core/tracer"
-
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/jukylin/esim/core/metrics"
 
@@ -16,11 +12,10 @@ import (
 	"github.com/jukylin/esim/log"
 )
 
-var esimOnce sync.Once
-var onceEsim *Esim
-
-const defaultAppname = "esim"
-const defaultPrometheusHTTPArrd = "9002"
+var (
+	esimOnce sync.Once
+	onceEsim *Esim
+)
 
 // Esim init start.
 type Esim struct {
@@ -56,28 +51,8 @@ func provideConf() config.Config {
 	return confFunc()
 }
 
-var prometheusFunc = func(conf config.Config, logger log.Logger) *metrics.Prometheus {
-	addr := conf.GetString("prometheus_http_addr")
-	if addr == "" {
-		addr = defaultPrometheusHTTPArrd
-	}
-
-	if in := strings.Index(addr, ":"); in < 0 {
-		addr = ":" + addr
-	}
-
-	go func() {
-		http.Handle("/metrics", promhttp.Handler())
-		logger.Panicf(http.ListenAndServe(addr, nil).Error())
-	}()
-
-	logger.Info("Prometheus Server Init Success")
-
-	return &metrics.Prometheus{}
-}
-
-func providePrometheus(conf config.Config, logger log.Logger) *metrics.Prometheus {
-	return prometheusFunc(conf, logger)
+func providePrometheus() *metrics.Prometheus {
+	return metrics.NewPrometheus()
 }
 
 var loggerFunc = func(conf config.Config) log.Logger {
@@ -85,7 +60,6 @@ var loggerFunc = func(conf config.Config) log.Logger {
 	logger := log.NewLogger(
 		loggerOptions.WithLoggerConf(conf),
 		loggerOptions.WithDebug(conf.GetBool("debug")),
-		//loggerOptions.WithJSON(conf.GetString("runmode") == "pro"),
 	)
 	return logger
 }
@@ -119,6 +93,5 @@ func (e *Esim) String() string {
 }
 
 func AppName() string {
-	return "appname"
-	//return onceEsim.AppName
+	return onceEsim.AppName
 }
