@@ -81,11 +81,10 @@ func NewClient(clientOptions *ClientOptions) *Client {
 func (gc *Client) DialContext(ctx context.Context, target string) *grpc.ClientConn {
 	var cancel context.CancelFunc
 	var err error
-	var dialTimeout = gc.clientOpts.config.DialTimeout
 
 	// connect timeout ctrl
-	if dialTimeout > 0 {
-		ctx, cancel = context.WithTimeout(ctx, dialTimeout)
+	if dt := gc.clientOpts.config.DialTimeout; dt > 0 {
+		ctx, cancel = context.WithTimeout(ctx, dt)
 		defer cancel()
 
 		// grpc.WithBlock()等待链接建立完成; 否则dialTimeout无效
@@ -106,7 +105,7 @@ func (gc *Client) DialContext(ctx context.Context, target string) *grpc.ClientCo
 }
 
 func (gc *Client) Close() {
-	gc.conn.Close()
+	_ = gc.conn.Close()
 }
 
 type TimeoutCallOption struct {

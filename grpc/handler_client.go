@@ -33,12 +33,12 @@ import (
 func timeOutUnaryClientInterceptor(timeout time.Duration) grpc.UnaryClientInterceptor {
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		var (
-			// request timeout ctrl
-			// timeout ctx must before the all
 			timeOpt *TimeoutCallOption
 			cancel  context.CancelFunc
 		)
 
+		// request timeout ctrl
+		// timeout ctx must before the all
 		for _, opt := range opts {
 			var ok bool
 			timeOpt, ok = opt.(*TimeoutCallOption)
