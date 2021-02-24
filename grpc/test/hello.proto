@@ -5,11 +5,11 @@ package testproto;
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 
 option go_package = ".;pbapi";
-option (gogoproto.goproto_getters_all) = false;
-option (gogoproto.marshaler_all) = true;
-option (gogoproto.sizer_all) = true;
-option (gogoproto.unmarshaler_all) = true;
-option (gogoproto.goproto_registration) = true;
+option (gogoproto.goproto_getters_all) = false; // false，不会为message的每个field生成一个Get函数
+option (gogoproto.marshaler_all) = true;   // 生成带marshal方法 marshaler为true的时候，sizer也必须为true
+option (gogoproto.sizer_all) = true; // 会生成相应method:"func Size() int"
+option (gogoproto.unmarshaler_all) = true;  // 生成带unmarshal方法
+option (gogoproto.goproto_registration) = true; // 如果为true，生成的文件将针对gogo/protobuf和golang/protobuf注册所有消息和类型
 
 service helloServer {
   rpc SayGoodbye (HelloRequest) returns (HelloResponse) {};

@@ -1,48 +1,23 @@
-# [](https://kj_test.bhecard.com:8443/gitlab/go-dev/esim/compare/v0.1.1...v) (2021-02-24)
-
-
-
-## [0.1.1](https://kj_test.bhecard.com:8443/gitlab/go-dev/esim/compare/v0.1.0...v0.1.1) (2020-06-06)
-
-
-
-# [0.1.0](https://kj_test.bhecard.com:8443/gitlab/go-dev/esim/compare/v0.0.9...v0.1.0) (2020-05-24)
-
-
-
-## [0.0.9](https://kj_test.bhecard.com:8443/gitlab/go-dev/esim/compare/v0.0.8...v0.0.9) (2020-05-19)
-
-
-
-## [0.0.8](https://kj_test.bhecard.com:8443/gitlab/go-dev/esim/compare/v0.0.7...v0.0.8) (2020-05-07)
-
-
-
-## [0.0.7](https://kj_test.bhecard.com:8443/gitlab/go-dev/esim/compare/v0.0.6...v0.0.7) (2020-05-07)
-
-
-
-## [0.0.6](https://kj_test.bhecard.com:8443/gitlab/go-dev/esim/compare/v0.0.5...v0.0.6) (2020-04-29)
-
-
-
-## [0.0.5](https://kj_test.bhecard.com:8443/gitlab/go-dev/esim/compare/v0.0.4...v0.0.5) (2020-04-29)
-
-
-
-## [0.0.4](https://kj_test.bhecard.com:8443/gitlab/go-dev/esim/compare/v0.0.3...v0.0.4) (2020-03-11)
-
-
-
-## [0.0.3](https://kj_test.bhecard.com:8443/gitlab/go-dev/esim/compare/v0.0.2...v0.0.3) (2020-03-04)
-
-
-
-## [0.0.2](https://kj_test.bhecard.com:8443/gitlab/go-dev/esim/compare/v0.0.1...v0.0.2) (2020-03-02)
-
-
-
-## 0.0.1 (2020-02-26)
-
-
-
+#  v2.0.1 2021-02-24 
+  1. 新增gRPC客户端请求超时自定义设置；
+    自定义超时 优先于 配置文件中设置默认的grpc_client_timeout超时；
+    自定义超时设置示例：
+      ```bash
+      test.NewHelloServerClient(conn).SayGoodbye(ctx, &test.HelloRequest{Name: "HH"}, WithTimeout(10*time.Second))
+      ```
+   
+  2. 新增gRPC服务端字段验证；
+    - 安装gogoproto
+        ```bash
+        go get github.com/gogo/protobuf/gogoproto/gogo.proto
+        ```
+        gogo proto写法参照 [https://kj_test.bhecard.com:8443/gitlab/go-dev/esim/-/blob/hy/mertrics/grpc/test/hello.proto]
+        配置规则参考validator.v10（github.com/go-playground/validator/v10）
+    - 配置文件开启： grpc_server_validate = true
+    - 生成proto对应的pb文件
+        ```
+        esim proto -v=true ../path/test.proto
+        ```
+  
+  3. 新增监控和链路追踪相关
+     参见[https://kj_test.bhecard.com:8443/confluence/pages/viewpage.action?pageId=1310725]

@@ -56,9 +56,7 @@ func TestMain(m *testing.M) {
 
 	tracer.InitTracer()
 
-	opts := ClientOptionals{}
-	clientOpt = NewClientOptions(
-		opts.WithDialOptions())
+	clientOpt = NewClientOptions(WithDialOptions(grpc.WithBlock()))
 
 	svr := NewServer()
 
