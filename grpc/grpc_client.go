@@ -22,8 +22,6 @@ type ClientOptions struct {
 
 type ClientOptional func(c *ClientOptions)
 
-type ClientOptionals struct{}
-
 func NewClientOptions(options ...ClientOptional) *ClientOptions {
 	c := &ClientOptions{}
 
@@ -64,7 +62,7 @@ func NewClientOptions(options ...ClientOptional) *ClientOptions {
 	return c
 }
 
-func (ClientOptionals) WithDialOptions(options ...grpc.DialOption) ClientOptional {
+func WithDialOptions(options ...grpc.DialOption) ClientOptional {
 	return func(g *ClientOptions) {
 		g.opts = options
 	}
@@ -82,22 +80,29 @@ func NewClient(clientOptions *ClientOptions) *Client {
 
 func (gc *Client) DialContext(ctx context.Context, target string) *grpc.ClientConn {
 	var cancel context.CancelFunc
+	var err error
+	var dialTimeout = gc.clientOpts.config.DialTimeout
+
 	// connect timeout ctrl
-	ctx, cancel = context.WithTimeout(ctx, gc.clientOpts.config.DialTimeout)
-	defer cancel()
+	if dialTimeout > 0 {
+		ctx, cancel = context.WithTimeout(ctx, dialTimeout)
+		defer cancel()
 
-	//todo debug
-	dl, _ := ctx.Deadline()
-	logx.Infoc(ctx, "拨号deadline:%v", dl.String())
+		// grpc.WithBlock()等待链接建立完成; 否则dialTimeout无效
+		gc.clientOpts.opts = append(gc.clientOpts.opts, grpc.WithBlock())
 
-	conn, err := grpc.DialContext(ctx, target, gc.clientOpts.opts...)
+		//todo debug
+		dl, _ := ctx.Deadline()
+		logx.Infoc(ctx, "拨号deadline:%v", dl.String())
+	}
+
+	gc.conn, err = grpc.DialContext(ctx, target, gc.clientOpts.opts...)
 	if err != nil {
 		logx.Errorc(ctx, "grpc dial error: %v", err)
 		return nil
 	}
-	gc.conn = conn
 
-	return conn
+	return gc.conn
 }
 
 func (gc *Client) Close() {
