@@ -3,9 +3,9 @@ package container
 import (
 	"sync"
 
-	"github.com/jukylin/esim/core/tracer"
-
 	"github.com/jukylin/esim/core/metrics"
+
+	"github.com/jukylin/esim/core/tracer"
 
 	"github.com/google/wire"
 	"github.com/jukylin/esim/config"
@@ -40,13 +40,6 @@ var esimSet = wire.NewSet(
 	provideAppName,
 )
 
-var confFunc = func() config.Config {
-	return config.NewMemConfig()
-}
-
-func SetConfFunc(conf func() config.Config) {
-	confFunc = conf
-}
 func provideConf() config.Config {
 	return confFunc()
 }
@@ -55,18 +48,6 @@ func providePrometheus() *metrics.Prometheus {
 	return metrics.NewPrometheus()
 }
 
-var loggerFunc = func(conf config.Config) log.Logger {
-	var loggerOptions log.LoggerOptions
-	logger := log.NewLogger(
-		loggerOptions.WithLoggerConf(conf),
-		loggerOptions.WithDebug(conf.GetBool("debug")),
-	)
-	return logger
-}
-
-func SetLogger(logger func(config.Config) log.Logger) {
-	loggerFunc = logger
-}
 func provideLogger(conf config.Config) log.Logger {
 	return loggerFunc(conf)
 }

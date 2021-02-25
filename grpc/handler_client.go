@@ -38,7 +38,6 @@ func timeOutUnaryClientInterceptor(timeout time.Duration) grpc.UnaryClientInterc
 		)
 
 		// request timeout ctrl
-		// timeout ctx must before the all
 		for _, opt := range opts {
 			var ok bool
 			timeOpt, ok = opt.(*TimeoutCallOption)
@@ -47,9 +46,9 @@ func timeOutUnaryClientInterceptor(timeout time.Duration) grpc.UnaryClientInterc
 			}
 		}
 		if timeOpt != nil && timeOpt.Timeout > 0 {
-			ctx, cancel = context.WithTimeout(ctx, timeOpt.Timeout/1000)
+			ctx, cancel = context.WithTimeout(ctx, timeOpt.Timeout)
 		} else {
-			ctx, cancel = context.WithTimeout(ctx, timeout/1000)
+			ctx, cancel = context.WithTimeout(ctx, timeout)
 		}
 		defer cancel()
 

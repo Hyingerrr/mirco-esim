@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/jukylin/esim/config"
-	logx "github.com/jukylin/esim/log"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -51,10 +50,8 @@ func NewPrometheus() *Prometheus {
 
 	go func() {
 		http.Handle("/metrics", promhttp.Handler())
-		logx.Panicf(http.ListenAndServe(addr, nil).Error())
+		http.ListenAndServe(addr, nil).Error()
 	}()
-
-	logx.Info("Prometheus Server Init Success")
 
 	return &Prometheus{}
 }

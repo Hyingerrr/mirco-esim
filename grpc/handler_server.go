@@ -37,6 +37,9 @@ func timeoutUnaryServerInterceptor(timeout time.Duration) grpc.UnaryServerInterc
 		// get timeout from ctx, compare with the config
 		if dl, ok := ctx.Deadline(); ok {
 			out := time.Until(dl)
+
+			logx.Infoc(ctx, "Server UntilOut:%v", out)
+
 			if out-time.Millisecond*20 > 0 {
 				out = out - time.Millisecond*20 // 减去本进程中的消耗 略估计
 			}
@@ -48,7 +51,7 @@ func timeoutUnaryServerInterceptor(timeout time.Duration) grpc.UnaryServerInterc
 
 		// debug
 		logx.Infoc(ctx, "Server Deadline timeOut:%v", timeout)
-		ctx, cancel = context.WithTimeout(ctx, timeout/1000)
+		ctx, cancel = context.WithTimeout(ctx, timeout)
 		defer cancel()
 		dls, _ := ctx.Deadline()
 		logx.Infoc(ctx, "Server Deadline:%v", dls)

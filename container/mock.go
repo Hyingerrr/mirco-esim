@@ -13,11 +13,11 @@ func provideMockConf() config.Config {
 	return conf
 }
 
-func provideMockProme(conf config.Config) *metrics.Prometheus {
-	return prometheusFunc(conf, nil)
+func provideMockProme() *metrics.Prometheus {
+	return metrics.NewPrometheus()
 }
 
-func provideMockAppName(conf config.Config) string {
+func provideMockAppName() string {
 	return "mocktest"
 }
 
