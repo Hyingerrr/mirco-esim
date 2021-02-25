@@ -3,7 +3,6 @@ package http
 import (
 	"bytes"
 	"context"
-	"crypto/tls"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -11,14 +10,15 @@ import (
 	"strings"
 	"time"
 
+	"github.com/opentracing/opentracing-go/ext"
+
+	"github.com/opentracing/opentracing-go"
+
 	"github.com/go-resty/resty/v2"
-	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/proxy"
 )
 
 type Client struct {
-	logger log.Logger
-
 	transports []func() interface{}
 
 	Client *resty.Client // go-resty用法灵活，不必局限于该文件下的SendPOST、SendGET等方法；
@@ -33,10 +33,6 @@ func NewClient(opts ...Options) *Client {
 
 	for _, opt := range opts {
 		opt(c)
-	}
-
-	if c.logger == nil {
-		c.logger = log.NewLogger()
 	}
 
 	if c.transports == nil {
@@ -66,38 +62,98 @@ func (ClientOptions) WithTimeOut(timeout time.Duration) Options {
 	}
 }
 
-func (ClientOptions) WithLogger(logger log.Logger) Options {
-	return func(hc *Client) {
-		hc.logger = logger
+func (c *Client) CloseIdleConnections(ctx context.Context) {
+	c.Client.SetCloseConnection(true)
+}
+
+func (c *Client) RC() *resty.Client {
+	return c.Client
+}
+
+func (c *Client) RequestPostJson(ctx context.Context, addr string, data interface{}, transport http.RoundTripper) (*resty.Response, error) {
+	client := c.Client
+	if transport != nil {
+		client = client.SetTransport(transport)
 	}
+
+	req := client.R().SetHeader("Content-Type", "application/json;charset=UTF-8").SetBody(data)
+	return c.Do(ctx, http.MethodPost, addr, req)
 }
 
-// with TLS/SSL
-func (ClientOptions) WithInsecureSkip() Options {
-	return func(hc *Client) {
-		hc.Client.SetTransport(&http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}})
+func (c *Client) RequestPost(ctx context.Context, addr string, data interface{},
+	header map[string]string, transport http.RoundTripper) (*resty.Response, error) {
+	client := c.Client
+	if transport != nil {
+		client = client.SetTransport(transport)
 	}
+
+	req := client.R()
+	if len(header) > 0 {
+		for k, v := range header {
+			req.Header.Set(k, v)
+		}
+	}
+	req = req.SetBody(data)
+
+	return c.Do(ctx, resty.MethodPost, addr, req)
 }
 
-func (c *Client) SetKeepAliveDisable(b bool) *Client {
-	c.Client = c.Client.SetTransport(&http.Transport{
-		DisableKeepAlives: b,
-	})
-	return c
+func (c *Client) RequestGet(ctx context.Context, addr string, header map[string]string, transport http.RoundTripper) (*resty.Response, error) {
+	client := c.Client
+	if transport != nil {
+		client = client.SetTransport(transport)
+	}
+
+	req := client.R()
+	if len(header) > 0 {
+		for k, v := range header {
+			req.Header.Set(k, v)
+		}
+	}
+
+	return c.Do(ctx, resty.MethodGet, addr, req)
 }
 
-func (c *Client) SendGet(ctx context.Context, addr string) (rtyResp *resty.Response, err error) {
-	return c.Client.R().SetContext(ctx).EnableTrace().Get(strings.TrimSpace(addr))
+func (c *Client) Do(ctx context.Context, method, addr string, req *resty.Request) (resp *resty.Response, err error) {
+	if span := opentracing.SpanFromContext(ctx); span != nil {
+		tracer := opentracing.GlobalTracer()
+		childSpan := tracer.StartSpan(
+			"http_call_server",
+			opentracing.ChildOf(span.Context()),
+		)
+		defer func() {
+			if err != nil {
+				ext.Error.Set(childSpan, true)
+				childSpan.LogKV("event", "error", "error.kind", "internal error", "message", err.Error())
+				if resp != nil {
+					ext.HTTPStatusCode.Set(childSpan, uint16(resp.StatusCode()))
+				}
+			} else {
+				ext.HTTPStatusCode.Set(childSpan, 200)
+			}
+			childSpan.Finish()
+		}()
+
+		var u *url.URL
+		u, err = url.Parse(addr)
+		if err != nil {
+			return nil, err
+		}
+
+		ext.HTTPMethod.Set(childSpan, method)
+		ext.HTTPUrl.Set(childSpan, u.Path)
+		ext.PeerHostname.Set(childSpan, u.Host)
+		ext.SpanKindRPCClient.Set(childSpan)
+		_ = tracer.Inject(childSpan.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
+	}
+
+	return req.Execute(method, strings.TrimSpace(addr))
 }
 
-func (c *Client) SendPost(ctx context.Context, addr, contentType string, body io.Reader) (rtyResp *resty.Response, err error) {
-	return c.Client.R().SetContext(ctx).EnableTrace().
-		SetHeader("Content-Type", contentType).
-		SetBody(body).
-		Post(strings.TrimSpace(addr))
-}
-
-// 兼容老的Get方法, 不建议再使用
+// --------------------------------------------------------- //
+// ----------------------- 兼容旧方法 ----------------------- //
+// ---------------------- 以下方法废弃 ---------------------- //
+// --------------------------------------------------------- //
 func (c *Client) Get(ctx context.Context, addr string) (resp *http.Response, err error) {
 	var (
 		rtyResp *resty.Response
@@ -112,7 +168,6 @@ func (c *Client) Get(ctx context.Context, addr string) (resp *http.Response, err
 	return rtyResp.RawResponse, err
 }
 
-// 兼容老的POST方法，不建议再使用
 func (c *Client) Post(ctx context.Context, addr, contentType string, body io.Reader) (resp *http.Response, err error) {
 	var (
 		rtyResp *resty.Response
@@ -131,20 +186,17 @@ func (c *Client) Post(ctx context.Context, addr, contentType string, body io.Rea
 	return rtyResp.RawResponse, err
 }
 
-// 兼容老PostForm方法，不建议再使用
 func (c *Client) PostForm(ctx context.Context, addr string, data url.Values) (resp *http.Response, err error) {
 	return c.Post(ctx, addr, "application/x-www-form-urlencoded", strings.NewReader(data.Encode()))
 }
 
-func (c *Client) CloseIdleConnections(ctx context.Context) {
-	c.Client.SetCloseConnection(true)
+func (c *Client) SendGet(ctx context.Context, addr string) (rtyResp *resty.Response, err error) {
+	return c.Client.R().SetContext(ctx).EnableTrace().Get(strings.TrimSpace(addr))
 }
 
-func (c *Client) RClient() *resty.Client {
-	return c.Client
-}
-
-//
-func (c *Client) RequestPostJson(ctx context.Context, addr string, data interface{}) {
-
+func (c *Client) SendPost(ctx context.Context, addr, contentType string, body io.Reader) (rtyResp *resty.Response, err error) {
+	return c.Client.R().SetContext(ctx).EnableTrace().
+		SetHeader("Content-Type", contentType).
+		SetBody(body).
+		Post(strings.TrimSpace(addr))
 }
