@@ -47,43 +47,38 @@ func NewClient(opts ...Options) *Client {
 }
 
 func WithProxy(proxy ...func() interface{}) Options {
-	return func(hc *Client) {
-		hc.transports = append(hc.transports, proxy...)
+	return func(c *Client) {
+		c.transports = append(c.transports, proxy...)
 	}
 }
 
 func WithTimeOut(timeout time.Duration) Options {
-	return func(hc *Client) {
-		hc.client.SetTimeout(timeout)
+	return func(c *Client) {
+		c.client.SetTimeout(timeout)
 	}
-}
-
-func (c *Client) CloseIdleConnections(ctx context.Context) {
-	c.client.SetCloseConnection(true)
 }
 
 func (c *Client) RC() *resty.Client {
 	return c.client
 }
 
-func (c *Client) RequestPostJson(ctx context.Context, addr string, data interface{}, transport http.RoundTripper) (*resty.Response, error) {
-	client := c.client
-	if transport != nil {
-		client = client.SetTransport(transport)
-	}
+func (c *Client) SetTimeout(ttl time.Duration) *Client {
+	c.client.SetTimeout(ttl)
+	return c
+}
 
-	req := client.R().SetHeader("Content-Type", "application/json;charset=UTF-8").SetBody(data)
+func (c *Client) SetTransport(transport http.RoundTripper) *Client {
+	c.client.SetTransport(transport)
+	return c
+}
+
+func (c *Client) RequestPostJson(ctx context.Context, addr string, data interface{}) (*resty.Response, error) {
+	req := c.client.R().SetHeader("Content-Type", "application/json;charset=UTF-8").SetBody(data)
 	return c.Do(ctx, http.MethodPost, addr, req)
 }
 
-func (c *Client) RequestPost(ctx context.Context, addr string, data interface{},
-	header map[string]string, transport http.RoundTripper) (*resty.Response, error) {
-	client := c.client
-	if transport != nil {
-		client = client.SetTransport(transport)
-	}
-
-	req := client.R()
+func (c *Client) RequestPost(ctx context.Context, addr string, data interface{}, header map[string]string) (*resty.Response, error) {
+	req := c.client.R()
 	if len(header) > 0 {
 		for k, v := range header {
 			req.Header.Set(k, v)
@@ -94,13 +89,8 @@ func (c *Client) RequestPost(ctx context.Context, addr string, data interface{},
 	return c.Do(ctx, resty.MethodPost, addr, req)
 }
 
-func (c *Client) RequestGet(ctx context.Context, addr string, header map[string]string, transport http.RoundTripper) (*resty.Response, error) {
-	client := c.client
-	if transport != nil {
-		client = client.SetTransport(transport)
-	}
-
-	req := client.R()
+func (c *Client) RequestGet(ctx context.Context, addr string, header map[string]string) (*resty.Response, error) {
+	req := c.client.R()
 	if len(header) > 0 {
 		for k, v := range header {
 			req.Header.Set(k, v)
@@ -162,8 +152,12 @@ Next:
 
 	if c.isMetric {
 		httpCallRespCount.Inc(container.AppName(), u.Path, strconv.Itoa(resp.StatusCode()))
-		httpCallReqDuration.Observe(float64(time.Since(beg)/time.Millisecond), u.Path)
+		httpCallReqDuration.Observe(float64(time.Since(beg)/time.Millisecond), container.AppName(), u.Path)
 	}
 
 	return
+}
+
+func (c *Client) CloseIdleConnections(ctx context.Context) {
+	c.client.SetCloseConnection(true)
 }

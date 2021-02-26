@@ -191,7 +191,7 @@ func validateServerInterceptor() grpc.UnaryServerInterceptor {
 
 func recoverFrom(r interface{}, fullMethod string) error {
 	var stacktrace string
-	for i := 1; i < 4; i++ {
+	for i := 1; i < 7; i++ {
 		_, f, l, got := runtime.Caller(i)
 		if !got {
 			break
