@@ -1,27 +1,24 @@
 package http
 
 import (
-	"github.com/prometheus/client_golang/prometheus"
+	"github.com/jukylin/esim/core/meta"
+	"github.com/jukylin/esim/core/metrics"
 )
 
-var httpTotal = prometheus.NewCounterVec(
-	prometheus.CounterOpts{
-		Name: "http_total",
-		Help: "Number of total",
-	},
-	[]string{"url", "method"},
-)
+var (
+	httpCallReqError = metrics.CreateMetricCount(
+		"http_call_resp_error",
+		[]string{meta.ServiceName, meta.Uri}...,
+	)
 
-var httpDuration = prometheus.NewHistogramVec(
-	prometheus.HistogramOpts{
-		Name:    "http_duration_seconds",
-		Help:    "http duration distribution",
-		Buckets: []float64{0.02, 0.08, 0.15, 0.5, 1, 3},
-	},
-	[]string{"url", "method"},
-)
+	httpCallRespCount = metrics.CreateMetricCount(
+		"http_call_resp",
+		[]string{meta.ServiceName, meta.Uri, meta.StatusCode}...,
+	)
 
-func init() {
-	prometheus.MustRegister(httpTotal)
-	prometheus.MustRegister(httpDuration)
-}
+	httpCallReqDuration = metrics.CreateMetricHistogram(
+		"http_call_dms",
+		[]float64{0.02, 0.08, 0.15, 0.5, 1, 3},
+		[]string{meta.ServiceName, meta.Uri}...,
+	)
+)

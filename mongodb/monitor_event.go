@@ -6,7 +6,6 @@ import (
 
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
-	"github.com/jukylin/esim/opentracing"
 	opentracing2 "github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.mongodb.org/mongo-driver/event"
@@ -46,7 +45,7 @@ func NewMonitorEvent(options ...EventOption) MgoEvent {
 	}
 
 	if m.tracer == nil {
-		m.tracer = opentracing.NewTracer("mongodb", m.logger)
+		//m.tracer = opentracing.NewTracer("mongodb", m.logger)
 	}
 
 	m.registerAfterEvent()
@@ -160,30 +159,30 @@ func (m *MonitorEvent) withSlowCommand(ctx context.Context, backEvent *mongoBack
 
 func (m *MonitorEvent) withTracer(ctx context.Context, backEvent *mongoBackEvent,
 	beginTime, endTime time.Time) {
-	execCommand, ok := ctx.Value("command").(*string)
+	//execCommand, ok := ctx.Value("command").(*string)
 
-	if ok {
-		var commandName string
-		var errStr string
+	//if ok {
+	//	var commandName string
+	//	var errStr string
+	//
+	//	if backEvent.succEvent != nil {
+	//		commandName = backEvent.succEvent.CommandName
+	//	} else if backEvent.failedEvent != nil {
+	//		commandName = backEvent.failedEvent.CommandName
+	//		errStr = backEvent.failedEvent.Failure
+	//	}
 
-		if backEvent.succEvent != nil {
-			commandName = backEvent.succEvent.CommandName
-		} else if backEvent.failedEvent != nil {
-			commandName = backEvent.failedEvent.CommandName
-			errStr = backEvent.failedEvent.Failure
-		}
-
-		if commandName != "" {
-			span := opentracing.GetSpan(ctx, m.tracer,
-				commandName, beginTime)
-			if errStr != "" {
-				span.SetTag("error", true)
-				span.LogKV("error_detailed", errStr)
-			}
-			span.LogKV("exec_command", *execCommand)
-			span.FinishWithOptions(opentracing2.FinishOptions{FinishTime: endTime})
-		}
-	}
+	//if commandName != "" {
+	//	span := opentracing.GetSpan(ctx, m.tracer,
+	//		commandName, beginTime)
+	//	if errStr != "" {
+	//		span.SetTag("error", true)
+	//		span.LogKV("error_detailed", errStr)
+	//	}
+	//	span.LogKV("exec_command", *execCommand)
+	//	span.FinishWithOptions(opentracing2.FinishOptions{FinishTime: endTime})
+	//}
+	//}
 }
 
 func (m *MonitorEvent) withMetrics(ctx context.Context, backEvent *mongoBackEvent,

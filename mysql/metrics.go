@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	mysqlDBTotal = metrics.CreateMetricCount("mysql_total", []string{meta.ServiceName, "table"}...)
+	mysqlDBCount = metrics.CreateMetricCount("mysql_total", []string{meta.ServiceName, "table"}...)
 
 	mysqlDBDuration = metrics.CreateMetricHistogram(
 		"mysql_duration_seconds",

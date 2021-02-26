@@ -5,17 +5,34 @@ import (
 	"fmt"
 	"strconv"
 
+	logx "github.com/jukylin/esim/log"
+
+	"github.com/jukylin/esim/core/meta"
+
 	"github.com/gomodule/redigo/redis"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 )
 
-func (c *Client) Do(ctx context.Context, command string, args ...interface{}) (interface{}, error) {
-	redisConn := c.GetCtxRedisConn()
+func (c *Client) DoWithMetric(redisConn redis.Conn, cmd string, args ...interface{}) (interface{}, error) {
+	redisCount.Inc(meta.ServiceName, cmd)
+	reply, err := redisConn.Do(cmd, args...)
+	if err != nil {
+		redisErrCount.Inc(meta.ServiceName, cmd, args[0].(string))
+	}
+	return reply, err
+}
+
+func (c *Client) Do(ctx context.Context, command string, args ...interface{}) (reply interface{}, err error) {
+	redisConn := c.GetRedisConn()
 	defer redisConn.Close()
 
-	if !c.conf.GetBool("redis_tracer") {
-		return redisConn.Do(ctx, command, args...)
+	if !c.isTracer {
+		if c.isMetric {
+			return c.DoWithMetric(redisConn, command, args...)
+		} else {
+			return redisConn.Do(command, args...)
+		}
 	}
 
 	tc := c.withTrace(ctx)
@@ -29,8 +46,13 @@ func (c *Client) Do(ctx context.Context, command string, args ...interface{}) (i
 	ext.PeerHostname.Set(span, tc.redisHost)
 	ext.SpanKindRPCClient.Set(span)
 
-	reply, err := redisConn.Do(ctx, command, args...)
+	if c.isMetric {
+		reply, err = c.DoWithMetric(redisConn, command, args...)
+	} else {
+		reply, err = redisConn.Do(command, args...)
+	}
 	if err != nil {
+		logx.Errorc(ctx, "redis error:%v, key[%v]", err, args[0])
 		ext.DBStatement.Set(span, statement)
 		if err != redis.ErrNil {
 			ext.Error.Set(span, true)

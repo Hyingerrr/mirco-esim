@@ -1,77 +1,73 @@
 package http
 
 import (
-	"bytes"
 	"context"
-	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
+
+	"github.com/jukylin/esim/config"
+
+	"github.com/jukylin/esim/container"
+	logx "github.com/jukylin/esim/log"
 
 	"github.com/opentracing/opentracing-go/ext"
 
 	"github.com/opentracing/opentracing-go"
 
 	"github.com/go-resty/resty/v2"
-	"github.com/jukylin/esim/proxy"
 )
 
 type Client struct {
+	client     *resty.Client // go-resty灵活使用
 	transports []func() interface{}
-
-	Client *resty.Client // go-resty用法灵活，不必局限于该文件下的SendPOST、SendGET等方法；
+	isTrace    bool
+	isMetric   bool
 }
 
 type Options func(*Client)
 
-type ClientOptions struct{}
-
 func NewClient(opts ...Options) *Client {
-	c := &Client{Client: resty.New()}
+	c := &Client{client: resty.New()}
 
 	for _, opt := range opts {
 		opt(c)
 	}
 
-	if c.transports == nil {
-		c.Client.SetTransport(http.DefaultTransport)
-	} else {
-		transport := proxy.NewProxyFactory().
-			GetFirstInstance("http", http.DefaultTransport, c.transports...).(http.RoundTripper)
-		c.Client.SetTransport(transport)
+	if c.client.GetClient().Timeout <= 0 {
+		c.client.SetTimeout(5 * time.Second)
 	}
 
-	if c.Client.GetClient().Timeout <= 0 {
-		c.Client.SetTimeout(30 * time.Second)
-	}
+	c.isMetric = config.GetBool("http_client_metrics")
+	c.isTrace = config.GetBool("http_client_tracer")
 
 	return c
 }
 
-func (ClientOptions) WithProxy(proxys ...func() interface{}) Options {
+func WithProxy(proxy ...func() interface{}) Options {
 	return func(hc *Client) {
-		hc.transports = append(hc.transports, proxys...)
+		hc.transports = append(hc.transports, proxy...)
 	}
 }
 
-func (ClientOptions) WithTimeOut(timeout time.Duration) Options {
+func WithTimeOut(timeout time.Duration) Options {
 	return func(hc *Client) {
-		hc.Client.SetTimeout(timeout * time.Second)
+		hc.client.SetTimeout(timeout)
 	}
 }
 
 func (c *Client) CloseIdleConnections(ctx context.Context) {
-	c.Client.SetCloseConnection(true)
+	c.client.SetCloseConnection(true)
 }
 
 func (c *Client) RC() *resty.Client {
-	return c.Client
+	return c.client
 }
 
 func (c *Client) RequestPostJson(ctx context.Context, addr string, data interface{}, transport http.RoundTripper) (*resty.Response, error) {
-	client := c.Client
+	client := c.client
 	if transport != nil {
 		client = client.SetTransport(transport)
 	}
@@ -82,7 +78,7 @@ func (c *Client) RequestPostJson(ctx context.Context, addr string, data interfac
 
 func (c *Client) RequestPost(ctx context.Context, addr string, data interface{},
 	header map[string]string, transport http.RoundTripper) (*resty.Response, error) {
-	client := c.Client
+	client := c.client
 	if transport != nil {
 		client = client.SetTransport(transport)
 	}
@@ -99,7 +95,7 @@ func (c *Client) RequestPost(ctx context.Context, addr string, data interface{},
 }
 
 func (c *Client) RequestGet(ctx context.Context, addr string, header map[string]string, transport http.RoundTripper) (*resty.Response, error) {
-	client := c.Client
+	client := c.client
 	if transport != nil {
 		client = client.SetTransport(transport)
 	}
@@ -115,6 +111,18 @@ func (c *Client) RequestGet(ctx context.Context, addr string, header map[string]
 }
 
 func (c *Client) Do(ctx context.Context, method, addr string, req *resty.Request) (resp *resty.Response, err error) {
+	var beg = time.Now()
+	var u *url.URL
+
+	u, err = url.Parse(addr)
+	if err != nil {
+		logx.Errorc(ctx, "url parse error:%v, addr[%v]", err, addr)
+		return nil, err
+	}
+	if !c.isTrace {
+		goto Next
+	}
+
 	if span := opentracing.SpanFromContext(ctx); span != nil {
 		tracer := opentracing.GlobalTracer()
 		childSpan := tracer.StartSpan(
@@ -134,12 +142,6 @@ func (c *Client) Do(ctx context.Context, method, addr string, req *resty.Request
 			childSpan.Finish()
 		}()
 
-		var u *url.URL
-		u, err = url.Parse(addr)
-		if err != nil {
-			return nil, err
-		}
-
 		ext.HTTPMethod.Set(childSpan, method)
 		ext.HTTPUrl.Set(childSpan, u.Path)
 		ext.PeerHostname.Set(childSpan, u.Host)
@@ -147,56 +149,21 @@ func (c *Client) Do(ctx context.Context, method, addr string, req *resty.Request
 		_ = tracer.Inject(childSpan.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
 	}
 
-	return req.Execute(method, strings.TrimSpace(addr))
-}
-
-// --------------------------------------------------------- //
-// ----------------------- 兼容旧方法 ----------------------- //
-// ---------------------- 以下方法废弃 ---------------------- //
-// --------------------------------------------------------- //
-func (c *Client) Get(ctx context.Context, addr string) (resp *http.Response, err error) {
-	var (
-		rtyResp *resty.Response
-	)
-
-	rtyResp, err = c.Client.R().SetContext(ctx).EnableTrace().Get(strings.TrimSpace(addr))
+Next:
+	resp, err = req.Execute(method, strings.TrimSpace(addr))
 	if err != nil {
-		return nil, err
+		logx.Errorc(ctx, "http call net error:%v, method[%v], host[%v], path[%v], cost[%v], body[%+v]",
+			err, method, u.Host, u.Path, time.Since(beg).String(), req.Body)
+		if c.isMetric {
+			httpCallReqError.Inc(container.AppName(), u.Path)
+		}
+		return
 	}
 
-	rtyResp.RawResponse.Body = ioutil.NopCloser(bytes.NewReader(rtyResp.Body()))
-	return rtyResp.RawResponse, err
-}
-
-func (c *Client) Post(ctx context.Context, addr, contentType string, body io.Reader) (resp *http.Response, err error) {
-	var (
-		rtyResp *resty.Response
-	)
-
-	rtyResp, err = c.Client.R().SetContext(ctx).EnableTrace().
-		SetHeader("Content-Type", contentType).
-		SetBody(body).
-		Post(strings.TrimSpace(addr))
-	if err != nil {
-		return nil, err
+	if c.isMetric {
+		httpCallRespCount.Inc(container.AppName(), u.Path, strconv.Itoa(resp.StatusCode()))
+		httpCallReqDuration.Observe(float64(time.Since(beg)/time.Millisecond), u.Path)
 	}
 
-	rtyResp.RawResponse.Body = ioutil.NopCloser(bytes.NewReader(rtyResp.Body()))
-
-	return rtyResp.RawResponse, err
-}
-
-func (c *Client) PostForm(ctx context.Context, addr string, data url.Values) (resp *http.Response, err error) {
-	return c.Post(ctx, addr, "application/x-www-form-urlencoded", strings.NewReader(data.Encode()))
-}
-
-func (c *Client) SendGet(ctx context.Context, addr string) (rtyResp *resty.Response, err error) {
-	return c.Client.R().SetContext(ctx).EnableTrace().Get(strings.TrimSpace(addr))
-}
-
-func (c *Client) SendPost(ctx context.Context, addr, contentType string, body io.Reader) (rtyResp *resty.Response, err error) {
-	return c.Client.R().SetContext(ctx).EnableTrace().
-		SetHeader("Content-Type", contentType).
-		SetBody(body).
-		Post(strings.TrimSpace(addr))
+	return
 }

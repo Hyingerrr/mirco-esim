@@ -13,8 +13,7 @@ import (
 
 	"github.com/jinzhu/gorm"
 	"github.com/jukylin/esim/config"
-	"github.com/jukylin/esim/log"
-	"github.com/jukylin/esim/proxy"
+	logx "github.com/jukylin/esim/log"
 )
 
 var clientOnce sync.Once
@@ -26,19 +25,12 @@ type Client struct {
 
 	sqlDbs map[string]*sql.DB
 
-	proxy []func() interface{}
-
-	conf config.Config
-
-	logger log.Logger
-
 	dbConfigs []DbConfig
 
 	closeChan chan bool
 
 	stateTicker time.Duration
 
-	// for integration tests
 	db *sql.DB
 
 	traceOnce sync.Once
@@ -63,7 +55,6 @@ func NewClient(options ...Option) *Client {
 		onceClient = &Client{
 			gdbs:        make(map[string]*gorm.DB),
 			sqlDbs:      make(map[string]*sql.DB),
-			proxy:       make([]func() interface{}, 0),
 			stateTicker: 10 * time.Second,
 			closeChan:   make(chan bool, 1),
 		}
@@ -72,41 +63,15 @@ func NewClient(options ...Option) *Client {
 			option(onceClient)
 		}
 
-		if onceClient.conf == nil {
-			onceClient.conf = config.NewNullConfig()
-		}
-
-		if onceClient.logger == nil {
-			onceClient.logger = log.NewLogger()
-		}
-
 		onceClient.init()
 	})
 
 	return onceClient
 }
 
-func (ClientOptions) WithConf(conf config.Config) Option {
-	return func(m *Client) {
-		m.conf = conf
-	}
-}
-
-func (ClientOptions) WithLogger(logger log.Logger) Option {
-	return func(m *Client) {
-		m.logger = logger
-	}
-}
-
 func (ClientOptions) WithDbConfig(dbConfigs []DbConfig) Option {
 	return func(m *Client) {
 		m.dbConfigs = dbConfigs
-	}
-}
-
-func (ClientOptions) WithProxy(proxys ...func() interface{}) Option {
-	return func(m *Client) {
-		m.proxy = append(m.proxy, proxys...)
 	}
 }
 
@@ -125,9 +90,9 @@ func (ClientOptions) WithDB(db *sql.DB) Option {
 // initializes Client.
 func (c *Client) init() {
 	dbConfigs := make([]DbConfig, 0)
-	err := c.conf.UnmarshalKey("dbs", &dbConfigs)
+	err := config.UnmarshalKey("dbs", &dbConfigs)
 	if err != nil {
-		c.logger.Panicf("Fatal error config file: %s \n", err.Error())
+		logx.Panicf("Fatal error config file: %s \n", err.Error())
 	}
 
 	if len(c.dbConfigs) > 0 {
@@ -135,67 +100,33 @@ func (c *Client) init() {
 	}
 
 	for _, dbConfig := range dbConfigs {
-		if len(c.proxy) == 0 {
-			var DB *gorm.DB
+		var DB *gorm.DB
 
-			if c.db != nil {
-				DB, err = gorm.Open("mysql", c.db)
-			} else {
-				DB, err = gorm.Open("mysql", dbConfig.Dsn)
-			}
-
-			if err != nil {
-				c.logger.Panicf("[db] %s init error : %s", dbConfig.Db, err.Error())
-			}
-
-			DB.DB().SetMaxIdleConns(dbConfig.MaxIdle)
-			DB.DB().SetMaxOpenConns(dbConfig.MaxOpen)
-			DB.DB().SetConnMaxLifetime(time.Duration(dbConfig.MaxLifetime))
-
-			c.setDb(dbConfig.Db, DB, DB.DB())
-
-			if c.conf.GetBool("debug") {
-				DB.LogMode(true)
-			}
+		if c.db != nil {
+			DB, err = gorm.Open("mysql", c.db)
 		} else {
-			var DB *gorm.DB
-			var dbSQL *sql.DB
+			DB, err = gorm.Open("mysql", dbConfig.Dsn)
+		}
+		if err != nil {
+			logx.Panicf("[db] %s init error : %s", dbConfig.Db, err.Error())
+		}
 
-			if c.db == nil {
-				dbSQL, err = sql.Open("mysql", dbConfig.Dsn)
-				if err != nil {
-					c.logger.Panicf("[db] %s init error : %s", dbConfig.Db, err.Error())
-				}
-			} else {
-				dbSQL = c.db
-			}
+		if err = DB.DB().Ping(); err != nil {
+			logx.Panicf("[db] %s ping error : %s", dbConfig.Db, err.Error())
+		}
 
-			firstProxy := proxy.NewProxyFactory().
-				GetFirstInstance("db_"+dbConfig.Db, dbSQL, c.proxy...)
+		DB.DB().SetMaxIdleConns(dbConfig.MaxIdle)
+		DB.DB().SetMaxOpenConns(dbConfig.MaxOpen)
+		DB.DB().SetConnMaxLifetime(time.Duration(dbConfig.MaxLifetime))
 
-			DB, err = gorm.Open("mysql", firstProxy)
-			if err != nil {
-				c.logger.Panicf("[db] %s ping error : %s", dbConfig.Db, err.Error())
-			}
+		c.setDb(dbConfig.Db, DB, DB.DB())
 
-			err = dbSQL.Ping()
-			if err != nil {
-				c.logger.Panicf("[db] %s ping error : %s", dbConfig.Db, err.Error())
-			}
-
-			dbSQL.SetMaxIdleConns(dbConfig.MaxIdle)
-			dbSQL.SetMaxOpenConns(dbConfig.MaxOpen)
-			dbSQL.SetConnMaxLifetime(time.Duration(dbConfig.MaxLifetime))
-
-			c.setDb(dbConfig.Db, DB, dbSQL)
-
-			if c.conf.GetBool("debug") {
-				DB.LogMode(true)
-			}
+		if config.GetBool("debug") {
+			DB.LogMode(true)
 		}
 
 		go c.Stats()
-		c.logger.Infof("[mysql] %s init success", dbConfig.Db)
+		logx.Infof("[mysql] %s init success", dbConfig.Db)
 	}
 }
 
@@ -215,19 +146,19 @@ func (c *Client) GetDb(dbName string) *gorm.DB {
 func (c *Client) getDb(ctx context.Context, dbName string) *gorm.DB {
 	if db, ok := c.gdbs[strings.ToLower(dbName)]; ok {
 		// inject monitor
-		if c.conf.GetBool("mysql_metric") {
+		if config.GetBool("mysql_metric") {
 			c.RegisterMetricsCallbacks(ctx, db)
 		}
 
 		// inject tracer
-		if c.conf.GetBool("mysql_tracer") {
+		if config.GetBool("mysql_tracer") {
 			db = c.Trace(ctx, db).DB
 		}
 
 		return db
 	}
 
-	c.logger.Errorc(ctx, "[db] %s not found", dbName)
+	logx.Errorc(ctx, "[db] %s not found", dbName)
 
 	return nil
 }
@@ -254,7 +185,7 @@ func (c *Client) Close() {
 	for _, db := range c.gdbs {
 		err = db.Close()
 		if err != nil {
-			c.logger.Errorf(err.Error())
+			logx.Errorf(err.Error())
 		}
 	}
 }
@@ -262,7 +193,7 @@ func (c *Client) Close() {
 func (c *Client) Stats() {
 	defer func() {
 		if err := recover(); err != nil {
-			c.logger.Infof(err.(error).Error())
+			logx.Infof(err.(error).Error())
 		}
 	}()
 
@@ -283,7 +214,7 @@ func (c *Client) Stats() {
 				mysqlDBStats.Set(float64(stats.WaitCount), serviceName, dbSchema, "wait_count")
 			}
 		case <-c.closeChan:
-			c.logger.Infof("stop stats")
+			logx.Infof("stop stats")
 			goto Stop
 		}
 	}

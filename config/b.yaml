@@ -44,13 +44,9 @@ mysql_metrics : false
 
 
 # http client
-#开启慢检查 true/false
-http_client_check_slow : false
-#  单位：ms
-http_client_slow_time : 500
-#开启 tracer true/false
+#开启 tracer
 http_client_tracer : false
-#启动metrice true/false
+#启动metric
 http_client_metrics : false
 
 # http server

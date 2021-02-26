@@ -93,7 +93,7 @@ wx_interval: 3
 		Dir:      "conf",
 		Content: `
 #grpc 服务端
-#开启慢检查 true/false
+#开启慢检查 bool
 grpc_server_check_slow : {{.Monitoring}}
 #单位: ms
 grpc_server_slow_time : 500
@@ -144,29 +144,25 @@ mgo_metrics : {{.Monitoring}}
 
 
 # http client
-#开启慢检查 true/false
-http_client_check_slow : {{.Monitoring}}
-#  单位：ms
-http_client_slow_time : 500
-#开启 tracer true/false
+#开启 tracer bool
 http_client_tracer : {{.Monitoring}}
-#启动metrice true/false
+#启动metric bool
 http_client_metrics : {{.Monitoring}}
 
 # http server
-#开启 tracer true/false
+#开启 tracer bool
 http_tracer: {{.Monitoring}}
-#启动metrice true/false
+#启动metric bool
 http_metrics: {{.Monitoring}}
 
 #redis
-#开启慢检查 true/false
+#开启慢检查 bool
 redis_check_slow : {{.Monitoring}}
 #慢命令 单位 ms
 redis_slow_time : 50
-#开启 tracer true/false
+#开启 tracer bool
 redis_tracer : {{.Monitoring}}
-#启动metrice true/false
+#启动metric bool
 redis_metrics : {{.Monitoring}}
 
 # tracer collect server

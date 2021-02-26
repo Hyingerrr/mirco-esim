@@ -10,7 +10,6 @@ import (
 
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/jukylin/esim/config"
-	"github.com/jukylin/esim/log"
 	io_prometheus_client "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 )
@@ -142,17 +141,10 @@ func TestProxyPatternWithTwoInstance(t *testing.T) {
 	clientOnce = sync.Once{}
 
 	clientOptions := ClientOptions{}
-	monitorProxyOptions := MonitorProxyOptions{}
-	memConfig := config.NewMemConfig()
+	_ = config.NewMemConfig()
 
 	client := NewClient(
 		clientOptions.WithDbConfig([]DbConfig{test1Config, test2Config}),
-		clientOptions.WithConf(memConfig),
-		clientOptions.WithProxy(func() interface{} {
-			return NewMonitorProxy(
-				monitorProxyOptions.WithConf(memConfig),
-				monitorProxyOptions.WithLogger(log.NewLogger()))
-		}),
 	)
 
 	ctx := context.Background()
@@ -180,30 +172,10 @@ func TestMulProxyPatternWithOneInstance(t *testing.T) {
 	clientOnce = sync.Once{}
 
 	clientOptions := ClientOptions{}
-	monitorProxyOptions := MonitorProxyOptions{}
-	memConfig := config.NewMemConfig()
+	_ = config.NewMemConfig()
 	// memConfig.Set("debug", true)
-
-	spyProxy1 := newSpyProxy(log.NewLogger(), "spyProxy1")
-	spyProxy2 := newSpyProxy(log.NewLogger(), "spyProxy2")
-	monitorProxy := NewMonitorProxy(
-		monitorProxyOptions.WithConf(memConfig),
-		monitorProxyOptions.WithLogger(log.NewLogger()))
-
 	client := NewClient(
-		clientOptions.WithDbConfig([]DbConfig{test1Config}),
-		clientOptions.WithConf(memConfig),
-		clientOptions.WithProxy(
-			func() interface{} {
-				return spyProxy1
-			},
-			func() interface{} {
-				return spyProxy2
-			},
-			func() interface{} {
-				return monitorProxy
-			},
-		))
+		clientOptions.WithDbConfig([]DbConfig{test1Config}))
 
 	ctx := context.Background()
 	db1 := client.GetCtxDb(ctx, "test_1")
@@ -215,16 +187,6 @@ func TestMulProxyPatternWithOneInstance(t *testing.T) {
 
 	assert.Len(t, db1.GetErrors(), 0)
 
-	assert.True(t, spyProxy1.QueryWasCalled)
-	assert.False(t, spyProxy1.QueryRowWasCalled)
-	assert.True(t, spyProxy1.ExecWasCalled)
-	assert.False(t, spyProxy1.PrepareWasCalled)
-
-	assert.True(t, spyProxy2.QueryWasCalled)
-	assert.False(t, spyProxy2.QueryRowWasCalled)
-	assert.True(t, spyProxy2.ExecWasCalled)
-	assert.False(t, spyProxy2.PrepareWasCalled)
-
 	client.Close()
 }
 
@@ -232,26 +194,11 @@ func TestMulProxyPatternWithTwoInstance(t *testing.T) {
 	clientOnce = sync.Once{}
 
 	clientOptions := ClientOptions{}
-	memConfig := config.NewMemConfig()
+	_ = config.NewMemConfig()
 	// memConfig.Set("debug", true)
 
 	client := NewClient(
 		clientOptions.WithDbConfig([]DbConfig{test1Config, test2Config}),
-		clientOptions.WithConf(memConfig),
-		clientOptions.WithProxy(
-			func() interface{} {
-				return newSpyProxy(log.NewLogger(), "spyProxy1")
-			},
-			func() interface{} {
-				return newSpyProxy(log.NewLogger(), "spyProxy2")
-			},
-			func() interface{} {
-				monitorProxyOptions := MonitorProxyOptions{}
-				return NewMonitorProxy(
-					monitorProxyOptions.WithConf(memConfig),
-					monitorProxyOptions.WithLogger(log.NewLogger()))
-			},
-		),
 	)
 
 	ctx := context.Background()
@@ -283,20 +230,10 @@ func BenchmarkParallelGetDB(b *testing.B) {
 	b.ResetTimer()
 
 	clientOptions := ClientOptions{}
-	monitorProxyOptions := MonitorProxyOptions{}
-	memConfig := config.NewMemConfig()
+	_ = config.NewMemConfig()
 
 	client := NewClient(
 		clientOptions.WithDbConfig([]DbConfig{test1Config, test2Config}),
-		clientOptions.WithConf(memConfig),
-		clientOptions.WithProxy(func() interface{} {
-			spyProxy := newSpyProxy(log.NewLogger(), "spyProxy")
-			spyProxy.NextProxy(NewMonitorProxy(
-				monitorProxyOptions.WithConf(memConfig),
-				monitorProxyOptions.WithLogger(log.NewLogger())))
-
-			return spyProxy
-		}),
 	)
 
 	b.RunParallel(func(pb *testing.PB) {
@@ -317,20 +254,11 @@ func TestDummyProxy_Exec(t *testing.T) {
 	clientOnce = sync.Once{}
 
 	clientOptions := ClientOptions{}
-	memConfig := config.NewMemConfig()
+	_ = config.NewMemConfig()
 	// memConfig.Set("debug", true)
 
 	client := NewClient(
 		clientOptions.WithDbConfig([]DbConfig{test1Config}),
-		clientOptions.WithConf(memConfig),
-		clientOptions.WithProxy(
-			func() interface{} {
-				return newSpyProxy(log.NewLogger(), "spyProxy")
-			},
-		// func() interface{} {
-		//	return newDummyProxy(log.NewLogger(), "dummyProxy")
-		// },
-		),
 	)
 	ctx := context.Background()
 	db1 := client.GetCtxDb(ctx, "test_1")
@@ -352,13 +280,6 @@ func TestClient_GetStats(t *testing.T) {
 	client := NewClient(
 		clientOptions.WithDbConfig([]DbConfig{test1Config, test2Config}),
 		clientOptions.WithStateTicker(10*time.Millisecond),
-		clientOptions.WithProxy(func() interface{} {
-			memConfig := config.NewMemConfig()
-			monitorProxyOptions := MonitorProxyOptions{}
-			return NewMonitorProxy(
-				monitorProxyOptions.WithConf(memConfig),
-				monitorProxyOptions.WithLogger(log.NewLogger()))
-		}),
 	)
 	ctx := context.Background()
 	db1 := client.GetCtxDb(ctx, "test_1")
@@ -387,13 +308,6 @@ func TestClient_TxCommit(t *testing.T) {
 	clientOptions := ClientOptions{}
 	client := NewClient(
 		clientOptions.WithDbConfig([]DbConfig{test1Config, test2Config}),
-		clientOptions.WithProxy(func() interface{} {
-			memConfig := config.NewMemConfig()
-			monitorProxyOptions := MonitorProxyOptions{}
-			return NewMonitorProxy(
-				monitorProxyOptions.WithConf(memConfig),
-				monitorProxyOptions.WithLogger(log.NewLogger()))
-		}),
 	)
 	ctx := context.Background()
 	db1 := client.GetCtxDb(ctx, "test_1")
@@ -423,13 +337,6 @@ func TestClient_TxRollBack(t *testing.T) {
 	clientOptions := ClientOptions{}
 	client := NewClient(
 		clientOptions.WithDbConfig([]DbConfig{test1Config, test2Config}),
-		clientOptions.WithProxy(func() interface{} {
-			memConfig := config.NewMemConfig()
-			monitorProxyOptions := MonitorProxyOptions{}
-			return NewMonitorProxy(
-				monitorProxyOptions.WithConf(memConfig),
-				monitorProxyOptions.WithLogger(log.NewLogger()))
-		}),
 	)
 	ctx := context.Background()
 	db1 := client.GetCtxDb(ctx, "test_1")
@@ -454,11 +361,10 @@ func TestClient_TxRollBack(t *testing.T) {
 
 func TestClient_RegisterMetricsCallbacks(t *testing.T) {
 	clientOptions := ClientOptions{}
-	memConfig := config.NewMemConfig()
+	_ = config.NewMemConfig()
 
 	client := NewClient(
 		clientOptions.WithDbConfig([]DbConfig{test1Config}),
-		clientOptions.WithConf(memConfig),
 	)
 	ctx := context.Background()
 	db1 := client.GetCtxDb(ctx, "test_1")

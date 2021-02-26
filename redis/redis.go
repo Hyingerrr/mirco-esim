@@ -7,24 +7,20 @@ import (
 	"sync"
 	"time"
 
+	"github.com/jukylin/esim/container"
+
 	"github.com/gomodule/redigo/redis"
 	"github.com/jukylin/esim/config"
-	elog "github.com/jukylin/esim/log"
-	"github.com/jukylin/esim/proxy"
-	"github.com/prometheus/client_golang/prometheus"
+	logx "github.com/jukylin/esim/log"
 )
 
-var poolOnce sync.Once
-var onceClient *Client
+var (
+	poolOnce   sync.Once
+	onceClient *Client
+)
 
 type Client struct {
 	client *redis.Pool
-
-	proxyConn []func() interface{}
-
-	conf config.Config
-
-	logger elog.Logger
 
 	proxyNum int
 
@@ -53,6 +49,10 @@ type Client struct {
 	redisConnTimeOut int64
 
 	dbIndex int // 默认0
+
+	isTracer bool
+
+	isMetric bool
 }
 
 type Option func(c *Client)
@@ -62,7 +62,6 @@ type ClientOptions struct{}
 func NewClient(options ...Option) *Client {
 	poolOnce.Do(func() {
 		onceClient = &Client{
-			proxyConn:   make([]func() interface{}, 0),
 			stateTicker: 10 * time.Second,
 			closeChan:   make(chan bool, 1),
 		}
@@ -71,99 +70,70 @@ func NewClient(options ...Option) *Client {
 			option(onceClient)
 		}
 
-		if onceClient.conf == nil {
-			onceClient.conf = config.NewNullConfig()
-		}
-
-		if onceClient.logger == nil {
-			onceClient.logger = elog.NewLogger()
-		}
-
-		onceClient.proxyNum = len(onceClient.proxyConn)
-		if onceClient.proxyNum > 0 {
-			onceClient.proxyInses = proxy.NewProxyFactory().
-				GetInstances("redis", onceClient.proxyConn...)
-		}
-
-		onceClient.redisMaxActive = onceClient.conf.GetInt("redis_max_active")
+		onceClient.redisMaxActive = config.GetInt("redis_max_active")
 		if onceClient.redisMaxActive == 0 {
 			onceClient.redisMaxActive = 500
 		}
 
-		onceClient.redisMaxIdle = onceClient.conf.GetInt("redis_max_idle")
+		onceClient.redisMaxIdle = config.GetInt("redis_max_idle")
 		if onceClient.redisMaxIdle == 0 {
 			onceClient.redisMaxIdle = 100
 		}
 
-		onceClient.redisIdleTimeout = onceClient.conf.GetInt("redis_idle_time_out")
+		onceClient.redisIdleTimeout = config.GetInt("redis_idle_time_out")
 		if onceClient.redisIdleTimeout == 0 {
 			onceClient.redisIdleTimeout = 600
 		}
 
-		onceClient.redisHost = onceClient.conf.GetString("redis_host")
+		onceClient.redisHost = config.GetString("redis_host")
 		if onceClient.redisHost == "" {
 			onceClient.redisHost = "0.0.0.0"
 		}
 
-		onceClient.redisPort = onceClient.conf.GetString("redis_port")
+		onceClient.redisPort = config.GetString("redis_port")
 		if onceClient.redisPort == "" {
 			onceClient.redisPort = "6379"
 		}
 
-		onceClient.redisPassword = onceClient.conf.GetString("redis_password")
-		onceClient.dbIndex = onceClient.conf.GetInt("redis_db_index")
+		onceClient.redisPassword = config.GetString("redis_password")
+		onceClient.dbIndex = config.GetInt("redis_db_index")
 
-		onceClient.redisReadTimeOut = onceClient.conf.GetInt64("redis_read_time_out")
+		onceClient.redisReadTimeOut = config.GetInt64("redis_read_time_out")
 		if onceClient.redisReadTimeOut == 0 {
 			onceClient.redisReadTimeOut = 300
 		}
 
-		onceClient.redisWriteTimeOut = onceClient.conf.GetInt64("redis_write_time_out")
+		onceClient.redisWriteTimeOut = config.GetInt64("redis_write_time_out")
 		if onceClient.redisWriteTimeOut == 0 {
 			onceClient.redisWriteTimeOut = 300
 		}
 
-		onceClient.redisConnTimeOut = onceClient.conf.GetInt64("redis_conn_time_out")
+		onceClient.redisConnTimeOut = config.GetInt64("redis_conn_time_out")
 		if onceClient.redisConnTimeOut == 0 {
 			onceClient.redisConnTimeOut = 300
 		}
 
+		onceClient.isTracer = config.GetBool("redis_tracer")
+		onceClient.isMetric = config.GetBool("redis_metrics")
+
 		onceClient.initPool()
 
-		if onceClient.conf.GetString("runmode") == "pro" {
+		if config.GetString("runmode") == "pro" {
 			// conn success ？
 			rc := onceClient.client.Get()
 			if rc.Err() != nil {
-				onceClient.logger.Panicf(rc.Err().Error())
+				logx.Panicf(rc.Err().Error())
 			}
 			rc.Close()
 		}
 
 		go onceClient.Stats()
 
-		onceClient.logger.Infof("[redis] init success %s : %s",
+		logx.Infof("[redis] init success %s : %s",
 			onceClient.redisHost, onceClient.redisPort)
 	})
 
 	return onceClient
-}
-
-func (ClientOptions) WithConf(conf config.Config) Option {
-	return func(r *Client) {
-		r.conf = conf
-	}
-}
-
-func (ClientOptions) WithLogger(logger elog.Logger) Option {
-	return func(r *Client) {
-		r.logger = logger
-	}
-}
-
-func (ClientOptions) WithProxy(proxyConn ...func() interface{}) Option {
-	return func(r *Client) {
-		r.proxyConn = append(r.proxyConn, proxyConn...)
-	}
 }
 
 func (ClientOptions) WithStateTicker(stateTicker time.Duration) Option {
@@ -185,14 +155,14 @@ func (c *Client) initPool() {
 				redis.DialConnectTimeout(time.Duration(c.redisConnTimeOut)*time.Millisecond))
 
 			if err != nil {
-				c.logger.Panicf("redis.Dial err: %s", err.Error())
+				logx.Panicf("redis.Dial err: %s", err.Error())
 				return nil, err
 			}
 
 			if c.redisPassword != "" {
 				if _, err = conn.Do("AUTH", c.redisPassword); err != nil {
 					err = conn.Close()
-					c.logger.Panicf("redis.AUTH err: %s", err)
+					logx.Panicf("redis.AUTH err: %s", err)
 					return nil, err
 				}
 			}
@@ -200,11 +170,11 @@ func (c *Client) initPool() {
 			// select db
 			_, err = conn.Do("SELECT", c.dbIndex)
 			if err != nil {
-				c.logger.Panicf("Select err: %s", err.Error())
+				logx.Panicf("Select err: %s", err.Error())
 				return nil, err
 			}
 
-			if c.conf.GetBool("debug") {
+			if config.GetBool("debug") {
 				conn = redis.NewLoggingConn(
 					conn, log.New(os.Stdout, "",
 						log.Ldate|log.Ltime|log.Lshortfile), "")
@@ -215,27 +185,7 @@ func (c *Client) initPool() {
 }
 
 func (c *Client) GetRedisConn() redis.Conn {
-	rc := c.client.Get()
-
-	return rc
-}
-
-// Recommended.
-func (c *Client) GetCtxRedisConn() ContextConn {
-	rc := c.client.Get()
-
-	facadeProxy := NewFacadeProxy()
-	facadeProxy.NextProxy(rc)
-
-	var firstProxy ContextConn
-	if c.proxyNum > 0 && rc.Err() == nil {
-		firstProxy = c.proxyInses[len(c.proxyInses)-1].(ContextConn)
-		firstProxy.(proxy.Proxy).NextProxy(facadeProxy)
-	} else {
-		firstProxy = facadeProxy
-	}
-
-	return firstProxy
+	return c.client.Get()
 }
 
 func (c *Client) Close() error {
@@ -259,15 +209,10 @@ func (c *Client) Stats() {
 		select {
 		case <-ticker.C:
 			stats = c.client.Stats()
-
-			activeCountLab := prometheus.Labels{"service": c.conf.GetString("appname"), "stats": "active_count"}
-			redisStats.With(activeCountLab).Set(float64(stats.ActiveCount))
-
-			idleCountLab := prometheus.Labels{"service": c.conf.GetString("appname"), "stats": "idle_count"}
-			redisStats.With(idleCountLab).Set(float64(stats.IdleCount))
-
+			redisStats.Set(float64(stats.ActiveCount), []string{container.AppName(), "active_count"}...)
+			redisStats.Set(float64(stats.IdleCount), []string{container.AppName(), "idle_count"}...)
 		case <-c.closeChan:
-			c.logger.Infof("stop stats")
+			logx.Infof("stop stats")
 			goto Stop
 		}
 	}

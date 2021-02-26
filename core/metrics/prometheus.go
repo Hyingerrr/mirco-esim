@@ -50,7 +50,10 @@ func NewPrometheus() *Prometheus {
 
 	go func() {
 		http.Handle("/metrics", promhttp.Handler())
-		http.ListenAndServe(addr, nil).Error()
+		err := http.ListenAndServe(addr, nil)
+		if err != nil {
+			panic(err)
+		}
 	}()
 
 	return &Prometheus{}

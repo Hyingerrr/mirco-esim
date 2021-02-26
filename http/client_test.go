@@ -1,7 +1,6 @@
 package http
 
 import (
-	"bytes"
 	"context"
 	"io/ioutil"
 	"net/http"
@@ -43,40 +42,7 @@ func TestMain(m *testing.M) {
 
 //nolint:dupl
 func TestMulLevelRoundTrip(t *testing.T) {
-	clientOptions := ClientOptions{}
-	httpClient := NewClient(
-		clientOptions.WithLogger(logger),
-		clientOptions.WithProxy(
-			func() interface{} {
-				return newSpyProxy(logger, "spyProxy1")
-			},
-			func() interface{} {
-				return newSpyProxy(logger, "spyProxy2")
-			},
-			func() interface{} {
-				stubsProxyOptions := StubsProxyOptions{}
-				stubsProxy := newStubsProxy(
-					stubsProxyOptions.WithRespFunc(func(request *http.Request) *http.Response {
-						resp := &http.Response{}
-						if request.URL.String() == host1 {
-							resp.StatusCode = http.StatusOK
-						} else if request.URL.String() == host2 {
-							resp.StatusCode = http.StatusMultipleChoices
-						}
-
-						resp.Body = ioutil.NopCloser(bytes.NewReader([]byte{}))
-
-						return resp
-					}),
-					stubsProxyOptions.WithName("stubsProxy1"),
-					stubsProxyOptions.WithLogger(logger),
-				)
-
-				return stubsProxy
-			},
-		),
-	)
-
+	httpClient := NewClient()
 	testCases := []struct {
 		behavior string
 		url      string
@@ -105,40 +71,7 @@ func TestMonitorProxy(t *testing.T) {
 	memConfig.Set("debug", true)
 	memConfig.Set("http_client_metrics", true)
 
-	monitorProxyOptions := MonitorProxyOptions{}
-
-	clientOptions := ClientOptions{}
-	httpClient := NewClient(
-		clientOptions.WithLogger(logger),
-		clientOptions.WithProxy(
-			func() interface{} {
-				return NewMonitorProxy(
-					monitorProxyOptions.WithConf(memConfig),
-					monitorProxyOptions.WithLogger(logger))
-			},
-			func() interface{} {
-				stubsProxyOptions := StubsProxyOptions{}
-				stubsProxy := newStubsProxy(
-					stubsProxyOptions.WithRespFunc(func(request *http.Request) *http.Response {
-						resp := &http.Response{}
-						if request.URL.String() == host1 {
-							resp.StatusCode = http.StatusOK
-						} else if request.URL.String() == host2 {
-							resp.StatusCode = http.StatusMultipleChoices
-						}
-
-						resp.Body = ioutil.NopCloser(bytes.NewReader([]byte{}))
-
-						return resp
-					}),
-					stubsProxyOptions.WithName("stubsProxy1"),
-					stubsProxyOptions.WithLogger(logger),
-				)
-
-				return stubsProxy
-			},
-		),
-	)
+	httpClient := NewClient()
 
 	ctx := context.Background()
 	resp, err := httpClient.Get(ctx, host1)
@@ -170,43 +103,7 @@ func TestTimeoutProxy(t *testing.T) {
 	memConfig.Set("http_client_check_slow", true)
 	memConfig.Set("http_client_slow_time", 5)
 
-	monitorProxyOptions := MonitorProxyOptions{}
-
-	clientOptions := ClientOptions{}
-	httpClient := NewClient(
-		clientOptions.WithLogger(logger),
-		clientOptions.WithProxy(
-			func() interface{} {
-				return NewMonitorProxy(
-					monitorProxyOptions.WithConf(memConfig),
-					monitorProxyOptions.WithLogger(logger))
-			},
-			func() interface{} {
-				return newSlowProxy(logger, "slowProxy")
-			},
-			func() interface{} {
-				stubsProxyOptions := StubsProxyOptions{}
-				stubsProxy := newStubsProxy(
-					stubsProxyOptions.WithRespFunc(func(request *http.Request) *http.Response {
-						resp := &http.Response{}
-						if request.URL.String() == host1 {
-							resp.StatusCode = http.StatusOK
-						} else if request.URL.String() == host2 {
-							resp.StatusCode = http.StatusMultipleChoices
-						}
-
-						resp.Body = ioutil.NopCloser(bytes.NewReader([]byte{}))
-
-						return resp
-					}),
-					stubsProxyOptions.WithName("stubsProxy1"),
-					stubsProxyOptions.WithLogger(logger),
-				)
-
-				return stubsProxy
-			},
-		),
-	)
+	httpClient := NewClient()
 
 	ctx := context.Background()
 	resp, err := httpClient.Get(ctx, host1)
@@ -229,7 +126,7 @@ func TestClient_Post(t *testing.T) {
 	fmt.Printf("start time: %v\n", beg.String())
 
 	httpClient := NewClient()
-	httpClient.RClient().OnAfterResponse(func(client *resty.Client, response *resty.Response) error {
+	httpClient.RC().OnAfterResponse(func(client *resty.Client, response *resty.Response) error {
 		fmt.Printf("end time: %v\n", time.Now().String())
 		fmt.Printf("cost: %v\n", time.Since(beg).String())
 		fmt.Println(response.Request.RawRequest.URL.Path)

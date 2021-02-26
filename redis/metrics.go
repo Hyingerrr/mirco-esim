@@ -1,37 +1,12 @@
 package redis
 
 import (
-	"github.com/prometheus/client_golang/prometheus"
+	"github.com/jukylin/esim/core/meta"
+	"github.com/jukylin/esim/core/metrics"
 )
 
-var redisTotal = prometheus.NewCounterVec(
-	prometheus.CounterOpts{
-		Name: "redis_total",
-		Help: "Number of hello requests in total",
-	},
-	[]string{"service", "cmd"},
+var (
+	redisErrCount = metrics.CreateMetricCount("redis_error", []string{meta.ServiceName, "cmd", "key"}...)
+	redisCount    = metrics.CreateMetricCount("redis_count", []string{meta.ServiceName, "cmd"}...)
+	redisStats    = metrics.CreateMetricGauge("redis_stats", []string{meta.ServiceName, "stats"}...)
 )
-
-// redis_duration_seconds.
-var redisDuration = prometheus.NewHistogramVec(
-	prometheus.HistogramOpts{
-		Name:    "redis_duration_seconds",
-		Help:    "redis duration distribution",
-		Buckets: []float64{0.001, 0.003, 0.005, 0.007, 0.01},
-	},
-	[]string{"service", "cmd"},
-)
-
-var redisStats = prometheus.NewGaugeVec(
-	prometheus.GaugeOpts{
-		Name: "redis_stats",
-		Help: "pool's statistics",
-	},
-	[]string{"service", "stats"},
-)
-
-func init() {
-	prometheus.MustRegister(redisTotal)
-	prometheus.MustRegister(redisDuration)
-	prometheus.MustRegister(redisStats)
-}
