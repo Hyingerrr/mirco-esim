@@ -53,7 +53,7 @@ var infraSet = wire.NewSet(
 func NewInfra() *Infra {
 	infraOnce.Do(func() {
 		esim  := container.NewEsim()
-		onceInfra = initInfra(esim, provideGrpcClient(esim))
+		onceInfra = initInfra(esim, provideGrpcClient())
 	})
 
 	return onceInfra
@@ -85,24 +85,8 @@ func (infraer *Infra) HealthCheck() []error {
 }
 
 
-func provideDb(esim *container.Esim) *mysql.Client {
-	clientOptions := mysql.ClientOptions{}
-	mysqlClent := mysql.NewClient(
-		clientOptions.WithConf(esim.Conf),
-		clientOptions.WithLogger(esim.Logger),
-		clientOptions.WithProxy(
-			func() interface{} {
-				monitorProxyOptions := mysql.MonitorProxyOptions{}
-				return mysql.NewMonitorProxy(
-					monitorProxyOptions.WithLogger(esim.Logger),
-					monitorProxyOptions.WithConf(esim.Conf),
-					monitorProxyOptions.WithTracer(esim.Tracer),
-				)
-			},
-		),
-	)
-
-	return mysqlClent
+func provideDb() *mysql.Client {
+	return mysqlClent := mysql.NewClient()
 }
 
 
@@ -118,16 +102,8 @@ func provideUid() uid.UIDRepo {
 	return uid.NewUIDRepo()
 }
 
-func provideGrpcClient(esim *container.Esim) *grpc.Client {
-	clientOptional := grpc.ClientOptionals{}
-	clientOptions := grpc.NewClientOptions(
-		clientOptional.WithLogger(esim.Logger),
-		clientOptional.WithConf(esim.Conf),
-	)
-
-	grpcClient := grpc.NewClient(clientOptions)
-
-	return grpcClient
+func provideGrpcClient() *grpc.Client {
+	return grpc.NewClient(grpc.NewClientOptions())
 }
 
 `,
@@ -171,7 +147,7 @@ import (
 
 // Injectors from wire.go:
 func initInfra(esim *container.Esim, grpc2 *grpc.Client) *Infra {
-	mysqlClient := provideDb(esim)
+	mysqlClient := provideDb()
 	userRepo := provideUserRepo(esim)
 	infra := &Infra{
 		Esim:     esim,

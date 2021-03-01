@@ -80,6 +80,7 @@ log_max_size: 100   # 单个文件最大size
 log_max_age: 15   # 保留旧文件的最大天数
 log_backup_count: 10  # 保留旧文件的最大个数
 log_compress: true  # 是否压缩/归档旧文件
+log_err_stats: true # 是否统计error日志
 
 # 微信报警 配置样例
 wx_web_hook: e0c3df32-547b-4699-a887-67c5ae8ea877  # wx群ID

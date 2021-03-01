@@ -10,17 +10,17 @@ import (
 )
 
 type Config struct {
-	Output       string `yaml:"log_output"` // 日志的位置 file|both|stdout
-	Level        string `yaml:"log_level"`
-	Format       string `yaml:"log_format"`
-	ReportCaller bool   `yaml:"log_report_caller"`
-	Stacktrace   bool   `yaml:"log_stack_trace"`
-	ErrStats     bool   `yaml:"log_err_stats"`
-	File         string `yaml:"log_file"`
-	MaxSize      int    `yaml:"log_max_size"`     // 单个文件最大size
-	MaxAge       int    `yaml:"log_max_age"`      // 保留旧文件的最大天数
-	BackupCount  int    `yaml:"log_backup_count"` // 保留旧文件的最大个数
-	Compress     bool   `yaml:"log_compress"`     // 是否压缩/归档旧文件
+	Output       string // 日志的位置 file|both|stdout
+	Level        string
+	Format       string
+	ReportCaller bool
+	Stacktrace   bool
+	ErrStats     bool
+	File         string
+	MaxSize      int  // 单个文件最大size
+	MaxAge       int  // 保留旧文件的最大天数
+	BackupCount  int  // 保留旧文件的最大个数
+	Compress     bool // 是否压缩/归档旧文件
 }
 
 func (c *Config) fillWithDefaultConfig(conf config.Config) {

@@ -97,7 +97,7 @@ func metricUnaryServerInterceptor(ctx context.Context, req interface{}, info *gr
 		if ai := mdCtx.Get(meta.AppID); len(ai) > 0 {
 			appId = ai[0]
 		} else {
-			logx.Errorc(ctx, "AppID_Is_Empty: method[%v], appId[%v]", info.FullMethod, appId)
+			logx.Infoc(ctx, "AppID_Is_Empty: method[%v], appId[%v]", info.FullMethod, appId)
 		}
 	}
 

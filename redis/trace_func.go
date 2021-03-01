@@ -29,10 +29,15 @@ func (c *Client) Do(ctx context.Context, command string, args ...interface{}) (r
 
 	if !c.isTracer {
 		if c.isMetric {
-			return c.DoWithMetric(redisConn, command, args...)
+			reply, err = c.DoWithMetric(redisConn, command, args...)
 		} else {
-			return redisConn.Do(command, args...)
+			reply, err = redisConn.Do(command, args...)
 		}
+		if err != nil {
+			logx.Errorc(ctx, "redis error:%v, key[%v]", err, args[0])
+		}
+
+		return
 	}
 
 	tc := c.withTrace(ctx)

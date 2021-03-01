@@ -134,7 +134,7 @@ func NewGinServer(app *{{.PackageName}}.App) *GinServer {
 
 	// MUST: middleware metadata must before the monitor
 	if app.Conf.GetBool("http_metrics") {
-		en.Use(handler.SetMetadata(), handler.HttpMonitor())
+		en.Use(handler.MetadataHandler(), handler.HttpMonitorHandler())
 	}
 
 	if app.Conf.GetBool("http_tracer") {
