@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jukylin/esim/config"
+	"github.com/Hyingerrr/mirco-esim/config"
 
-	"github.com/jukylin/esim/pkg/hepler"
+	"github.com/Hyingerrr/mirco-esim/pkg/hepler"
 
 	"github.com/stretchr/testify/assert"
 )

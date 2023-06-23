@@ -6,14 +6,14 @@ import (
 	"strings"
 	"time"
 
-	logx "github.com/jukylin/esim/log"
+	logx "github.com/Hyingerrr/mirco-esim/log"
 
-	"github.com/jukylin/esim/core/tracer"
+	"github.com/Hyingerrr/mirco-esim/core/tracer"
 
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 
-	"github.com/jukylin/esim/container"
+	"github.com/Hyingerrr/mirco-esim/container"
 
 	"github.com/jinzhu/gorm"
 )

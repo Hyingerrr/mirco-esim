@@ -3,10 +3,11 @@ package infra
 import (
 	"testing"
 
-	"github.com/jukylin/esim/log"
-	"github.com/jukylin/esim/pkg"
-	filedir "github.com/jukylin/esim/pkg/file-dir"
-	domain_file "github.com/jukylin/esim/tool/db2entity/domain-file"
+	"github.com/Hyingerrr/mirco-esim/log"
+	"github.com/Hyingerrr/mirco-esim/pkg"
+	filedir "github.com/Hyingerrr/mirco-esim/pkg/file-dir"
+	domain_file "github.com/Hyingerrr/mirco-esim/tool/db2entity/domain-file"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -20,8 +21,8 @@ import (
 	"sync"
 
 	"github.com/google/wire"
-	"github.com/jukylin/esim/container"
-	"github.com/jukylin/esim/redis"
+	"github.com/Hyingerrr/mirco-esim/container"
+	"github.com/Hyingerrr/mirco-esim/redis"
 )
 
 var infraOnce sync.Once

@@ -1,8 +1,8 @@
 package container
 
 import (
-	"github.com/jukylin/esim/config"
-	logx "github.com/jukylin/esim/log"
+	"github.com/Hyingerrr/mirco-esim/config"
+	logx "github.com/Hyingerrr/mirco-esim/log"
 )
 
 var (

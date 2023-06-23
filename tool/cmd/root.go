@@ -5,7 +5,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/jukylin/esim/log"
+	"github.com/Hyingerrr/mirco-esim/log"
+
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
 )

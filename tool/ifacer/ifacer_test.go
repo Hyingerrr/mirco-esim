@@ -3,9 +3,10 @@ package ifacer
 import (
 	"testing"
 
-	"github.com/jukylin/esim/log"
-	filedir "github.com/jukylin/esim/pkg/file-dir"
-	"github.com/jukylin/esim/pkg/templates"
+	"github.com/Hyingerrr/mirco-esim/log"
+	filedir "github.com/Hyingerrr/mirco-esim/pkg/file-dir"
+	"github.com/Hyingerrr/mirco-esim/pkg/templates"
+
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )
@@ -15,8 +16,8 @@ var Result = `package example1
 import (
 	context "context"
 
-	redis "github.com/jukylin/esim/redis"
-	repo "github.com/jukylin/esim/tool/ifacer/example/repo"
+	redis "github.com/Hyingerrr/mirco-esim/redis"
+	repo "github.com/Hyingerrr/mirco-esim/tool/ifacer/example/repo"
 )
 
 type TestStub struct{}
@@ -141,7 +142,7 @@ func TestIfacer_Write(t *testing.T) {
 }
 
 func TestIfacer_GetUniqueImportName(t *testing.T) {
-	pkgName := "github.com/jukylin/esim/redis"
+	pkgName := "github.com/Hyingerrr/mirco-esim/redis"
 
 	writer := &filedir.NullWrite{}
 	ifacer := NewIfacer(
@@ -177,7 +178,7 @@ func TestIfacer_SetNoConflictImport(t *testing.T) {
 		pkgName    string
 		expected   string
 	}{
-		{"redis", "redis", "github.com/jukylin/esim/redis", "github.com/jukylin/esim/redis"},
+		{"redis", "redis", "github.com/Hyingerrr/mirco-esim/redis", "github.com/Hyingerrr/mirco-esim/redis"},
 		{"aredis", "redis", "github.com/jukylin/a/redis", "github.com/jukylin/a/redis"},
 		{"jukyaredis", "redis", "github.com/juky/a/redis", "github.com/juky/a/redis"},
 		{"gitlabcomjukyaredis", "redis", "gitlab.com/juky/a/redis", "gitlab.com/juky/a/redis"},

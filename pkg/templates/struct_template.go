@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"text/template"
 
-	"github.com/jukylin/esim/pkg"
+	"github.com/Hyingerrr/mirco-esim/pkg"
 )
 
 type StructInfo struct {

@@ -3,7 +3,8 @@ package domainfile
 import (
 	"testing"
 
-	"github.com/jukylin/esim/log"
+	"github.com/Hyingerrr/mirco-esim/log"
+
 	"github.com/stretchr/testify/assert"
 	// "github.com/davecgh/go-spew/spew"
 )

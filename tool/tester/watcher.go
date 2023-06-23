@@ -1,8 +1,9 @@
 package tester
 
 import (
+	"github.com/Hyingerrr/mirco-esim/log"
+
 	"github.com/fsnotify/fsnotify"
-	"github.com/jukylin/esim/log"
 )
 
 type EsimWatcher interface {

@@ -11,8 +11,9 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/jukylin/esim/log"
-	filedir "github.com/jukylin/esim/pkg/file-dir"
+	"github.com/Hyingerrr/mirco-esim/log"
+	filedir "github.com/Hyingerrr/mirco-esim/pkg/file-dir"
+
 	"github.com/spf13/viper"
 )
 

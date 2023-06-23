@@ -4,9 +4,9 @@ import (
 	"context"
 	"sync"
 
-	"github.com/jukylin/esim/config"
+	"github.com/Hyingerrr/mirco-esim/config"
 
-	"github.com/jukylin/esim/log"
+	"github.com/Hyingerrr/mirco-esim/log"
 )
 
 type TaskPool struct {

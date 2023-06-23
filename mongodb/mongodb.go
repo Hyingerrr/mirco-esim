@@ -6,8 +6,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jukylin/esim/config"
-	"github.com/jukylin/esim/log"
+	"github.com/Hyingerrr/mirco-esim/config"
+	"github.com/Hyingerrr/mirco-esim/log"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"go.mongodb.org/mongo-driver/event"
 	"go.mongodb.org/mongo-driver/mongo"

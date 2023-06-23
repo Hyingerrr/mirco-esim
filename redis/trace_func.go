@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strconv"
 
-	logx "github.com/jukylin/esim/log"
+	logx "github.com/Hyingerrr/mirco-esim/log"
 
-	"github.com/jukylin/esim/core/meta"
+	"github.com/Hyingerrr/mirco-esim/core/meta"
 
 	"github.com/gomodule/redigo/redis"
 	"github.com/opentracing/opentracing-go"

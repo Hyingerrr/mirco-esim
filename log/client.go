@@ -6,8 +6,9 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/jukylin/esim/config"
-	tracerid "github.com/jukylin/esim/pkg/tracer-id"
+	"github.com/Hyingerrr/mirco-esim/config"
+	tracerid "github.com/Hyingerrr/mirco-esim/pkg/tracer-id"
+
 	"github.com/opentracing/opentracing-go"
 	"github.com/uber/jaeger-client-go"
 	"go.uber.org/zap"

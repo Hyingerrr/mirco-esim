@@ -8,15 +8,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jukylin/esim/core/tracer"
+	"github.com/Hyingerrr/mirco-esim/core/tracer"
 
-	"github.com/jukylin/esim/grpc/test"
+	"github.com/Hyingerrr/mirco-esim/grpc/test"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/jukylin/esim/config"
-	"github.com/jukylin/esim/log"
+	"github.com/Hyingerrr/mirco-esim/config"
+	"github.com/Hyingerrr/mirco-esim/log"
+
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 )

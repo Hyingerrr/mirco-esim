@@ -12,7 +12,7 @@ import (
 	"encoding/asn1"
 	"errors"
 
-	"github.com/jukylin/esim/pkg/security/pkcs12/internal/rc2"
+	"github.com/Hyingerrr/mirco-esim/pkg/security/pkcs12/internal/rc2"
 )
 
 var (

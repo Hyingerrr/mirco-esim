@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jukylin/esim/rocketmq/binding"
+	"github.com/Hyingerrr/mirco-esim/rocketmq/binding"
 )
 
 const abortIndex int8 = math.MaxInt8 / 2

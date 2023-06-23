@@ -1,6 +1,6 @@
 package domainfile
 
-import "github.com/jukylin/esim/pkg"
+import "github.com/Hyingerrr/mirco-esim/pkg"
 
 type daoTpl struct {
 	Imports pkg.Imports

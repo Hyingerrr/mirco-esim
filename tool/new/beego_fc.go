@@ -64,10 +64,10 @@ import (
 	"net/http"
 	"strings"
 	"time"
-	middleware "github.com/jukylin/esim/middle-ware"
+	middleware "github.com/Hyingerrr/mirco-esim/middle-ware"
 	"github.com/astaxie/beego"
 	"github.com/opentracing-contrib/go-stdlib/nethttp"
-	"github.com/jukylin/esim/container"
+	"github.com/Hyingerrr/mirco-esim/container"
 	_ "{{.ProPath}}{{.ServerName}}/internal/transports/http/routers"
 )
 
@@ -179,8 +179,8 @@ import (
 	"io/ioutil"
 	"testing"
 
-	http_client "github.com/jukylin/esim/http"
-	"github.com/jukylin/esim/log"
+	http_client "github.com/Hyingerrr/mirco-esim/http"
+	"github.com/Hyingerrr/mirco-esim/log"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -241,9 +241,9 @@ import (
 	"os"
 	"testing"
 	"context"
-	"github.com/jukylin/esim/grpc"
+	"github.com/Hyingerrr/mirco-esim/grpc"
 	_grpc "google.golang.org/grpc"
-	"github.com/jukylin/esim/container"
+	"github.com/Hyingerrr/mirco-esim/container"
 	{{.PackageName}} "{{.ProPath}}{{.ServerName}}/internal"
 	"{{.ProPath}}{{.ServerName}}/internal/infra"
 	"{{.ProPath}}{{.ServerName}}/internal/transports/http"

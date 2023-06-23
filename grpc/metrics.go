@@ -1,8 +1,8 @@
 package grpc
 
 import (
-	"github.com/jukylin/esim/core/meta"
-	"github.com/jukylin/esim/core/metrics"
+	"github.com/Hyingerrr/mirco-esim/core/meta"
+	"github.com/Hyingerrr/mirco-esim/core/metrics"
 )
 
 var (

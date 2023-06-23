@@ -5,10 +5,11 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/jukylin/esim/log"
-	"github.com/jukylin/esim/pkg"
-	filedir "github.com/jukylin/esim/pkg/file-dir"
-	"github.com/jukylin/esim/pkg/templates"
+	"github.com/Hyingerrr/mirco-esim/log"
+	"github.com/Hyingerrr/mirco-esim/pkg"
+	filedir "github.com/Hyingerrr/mirco-esim/pkg/file-dir"
+	"github.com/Hyingerrr/mirco-esim/pkg/templates"
+
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )
@@ -85,8 +86,8 @@ func TestCopyOldStructInfo(t *testing.T) {
 var replaceStructContent = `package main
 
 import (
-	"github.com/jukylin/esim/config"
-	"github.com/jukylin/esim/log"
+	"github.com/Hyingerrr/mirco-esim/config"
+	"github.com/Hyingerrr/mirco-esim/log"
 )
 
 type test struct {

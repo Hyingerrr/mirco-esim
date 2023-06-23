@@ -3,7 +3,8 @@ package log
 import (
 	"context"
 
-	"github.com/jukylin/esim/config"
+	"github.com/Hyingerrr/mirco-esim/config"
+
 	"go.uber.org/zap"
 )
 

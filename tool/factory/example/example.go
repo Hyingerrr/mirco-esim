@@ -1,7 +1,7 @@
 package example
 
 import (
-	"github.com/jukylin/esim/pkg"
+	"github.com/Hyingerrr/mirco-esim/pkg"
 )
 
 //nolint:unused,structcheck

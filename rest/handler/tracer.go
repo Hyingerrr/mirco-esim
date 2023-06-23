@@ -6,8 +6,9 @@ import (
 
 	"github.com/opentracing/opentracing-go/ext"
 
+	tracerid "github.com/Hyingerrr/mirco-esim/pkg/tracer-id"
+
 	"github.com/gin-gonic/gin"
-	tracerid "github.com/jukylin/esim/pkg/tracer-id"
 	"github.com/opentracing/opentracing-go"
 )
 

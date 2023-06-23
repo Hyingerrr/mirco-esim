@@ -8,8 +8,8 @@ import (
 	//is a test
 	"sync"
 	"github.com/google/wire"
-	"github.com/jukylin/esim/container"
-	"github.com/jukylin/esim/redis"
+	"github.com/Hyingerrr/mirco-esim/container"
+	"github.com/Hyingerrr/mirco-esim/redis"
 )
 
 

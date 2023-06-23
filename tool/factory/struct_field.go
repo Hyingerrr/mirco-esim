@@ -13,12 +13,13 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/Hyingerrr/mirco-esim/log"
+	"github.com/Hyingerrr/mirco-esim/pkg"
+	filedir "github.com/Hyingerrr/mirco-esim/pkg/file-dir"
+	"github.com/Hyingerrr/mirco-esim/pkg/templates"
+
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
-	"github.com/jukylin/esim/log"
-	"github.com/jukylin/esim/pkg"
-	filedir "github.com/jukylin/esim/pkg/file-dir"
-	"github.com/jukylin/esim/pkg/templates"
 	"golang.org/x/tools/imports"
 )
 

@@ -5,9 +5,10 @@ import (
 	"os"
 	"time"
 
-	logx "github.com/jukylin/esim/log"
+	logx "github.com/Hyingerrr/mirco-esim/log"
 
-	"github.com/jukylin/esim/config"
+	"github.com/Hyingerrr/mirco-esim/config"
+
 	"github.com/opentracing/opentracing-go"
 	"github.com/uber/jaeger-client-go"
 	jconfig "github.com/uber/jaeger-client-go/config"

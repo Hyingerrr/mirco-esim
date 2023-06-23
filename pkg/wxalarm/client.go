@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jukylin/esim/log"
+	"github.com/Hyingerrr/mirco-esim/log"
 
-	"github.com/jukylin/esim/config"
+	"github.com/Hyingerrr/mirco-esim/config"
 )
 
 type WXAlarm struct {

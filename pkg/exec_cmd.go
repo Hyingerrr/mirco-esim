@@ -6,7 +6,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/jukylin/esim/log"
+	"github.com/Hyingerrr/mirco-esim/log"
 )
 
 const (

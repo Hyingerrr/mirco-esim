@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jukylin/esim/config"
+	"github.com/Hyingerrr/mirco-esim/config"
 
-	"github.com/jukylin/esim/container"
-	logx "github.com/jukylin/esim/log"
+	"github.com/Hyingerrr/mirco-esim/container"
+	logx "github.com/Hyingerrr/mirco-esim/log"
 
 	"github.com/opentracing/opentracing-go/ext"
 

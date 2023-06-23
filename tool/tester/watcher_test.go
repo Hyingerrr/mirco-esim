@@ -6,8 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jukylin/esim/log"
-	filedir "github.com/jukylin/esim/pkg/file-dir"
+	"github.com/Hyingerrr/mirco-esim/log"
+	filedir "github.com/Hyingerrr/mirco-esim/pkg/file-dir"
+
 	"github.com/stretchr/testify/assert"
 )
 

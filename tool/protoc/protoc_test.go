@@ -4,7 +4,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/jukylin/esim/log"
+	"github.com/Hyingerrr/mirco-esim/log"
+
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )

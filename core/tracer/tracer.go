@@ -4,7 +4,7 @@ import (
 	"io"
 	"time"
 
-	"github.com/jukylin/esim/pkg/hepler"
+	"github.com/Hyingerrr/mirco-esim/pkg/hepler"
 
 	"github.com/uber/jaeger-client-go"
 	jconfig "github.com/uber/jaeger-client-go/config"

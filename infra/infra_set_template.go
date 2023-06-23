@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"text/template"
 
-	"github.com/jukylin/esim/pkg/templates"
+	"github.com/Hyingerrr/mirco-esim/pkg/templates"
 )
 
 type infraSetArgs struct {

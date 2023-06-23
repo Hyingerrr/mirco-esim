@@ -6,9 +6,9 @@
 
 > 使用 module 包管理工具
 
-> go get github.com/jukylin/esim
+> go get github.com/Hyingerrr/mirco-esim
 
-> cd github.com/jukylin/esim
+> cd github.com/Hyingerrr/mirco-esim
 
 > go build -o esim ./tool && mv ./esim $GOPATH/bin
 

@@ -8,8 +8,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Hyingerrr/mirco-esim/config"
+
 	_ "github.com/jinzhu/gorm/dialects/mysql"
-	"github.com/jukylin/esim/config"
 	io_prometheus_client "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 )

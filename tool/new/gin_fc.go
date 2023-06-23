@@ -91,9 +91,9 @@ import (
 	"time"
 	"github.com/gin-gonic/gin"
 	"{{.ProPath}}{{.ServerName}}/internal/transports/http/routers"
-	middleware "github.com/jukylin/esim/middle-ware"
-	"github.com/jukylin/esim/log"
-	"github.com/jukylin/esim/rest"
+	middleware "github.com/Hyingerrr/mirco-esim/middle-ware"
+	"github.com/Hyingerrr/mirco-esim/log"
+	"github.com/Hyingerrr/mirco-esim/rest"
 	"{{.ProPath}}{{.ServerName}}/internal/transports/http/controllers"
 	{{.PackageName}} "{{.ProPath}}{{.ServerName}}/internal"
 )
@@ -180,8 +180,8 @@ import (
 	"io/ioutil"
 	"testing"
 
-	http_client "github.com/jukylin/esim/http"
-	"github.com/jukylin/esim/log"
+	http_client "github.com/Hyingerrr/mirco-esim/http"
+	"github.com/Hyingerrr/mirco-esim/log"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -353,8 +353,8 @@ import (
 	"testing"
 	"context"
 	{{.PackageName}} "{{.ProPath}}{{.ServerName}}/internal"
-	"github.com/jukylin/esim/container"
-	"github.com/jukylin/esim/grpc"
+	"github.com/Hyingerrr/mirco-esim/container"
+	"github.com/Hyingerrr/mirco-esim/grpc"
 	_grpc "google.golang.org/grpc"
 	"{{.ProPath}}{{.ServerName}}/internal/infra"
 	"{{.ProPath}}{{.ServerName}}/internal/transports/http"

@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jukylin/esim/config"
+	"github.com/Hyingerrr/mirco-esim/config"
 
 	"github.com/stretchr/testify/assert"
 )

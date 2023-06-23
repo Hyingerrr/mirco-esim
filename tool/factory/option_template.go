@@ -1,7 +1,7 @@
 package factory
 
 import (
-	"github.com/jukylin/esim/pkg/templates"
+	"github.com/Hyingerrr/mirco-esim/pkg/templates"
 )
 
 var confOptionTemplate = `

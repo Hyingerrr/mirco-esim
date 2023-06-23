@@ -3,7 +3,7 @@ package log
 import (
 	"strings"
 
-	"github.com/jukylin/esim/config"
+	"github.com/Hyingerrr/mirco-esim/config"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"

@@ -3,8 +3,9 @@ package factory
 import (
 	"testing"
 
-	"github.com/jukylin/esim/pkg"
-	"github.com/jukylin/esim/pkg/templates"
+	"github.com/Hyingerrr/mirco-esim/pkg"
+	"github.com/Hyingerrr/mirco-esim/pkg/templates"
+
 	"github.com/stretchr/testify/assert"
 )
 

@@ -16,8 +16,9 @@ limitations under the License.
 package main
 
 import (
+	"github.com/Hyingerrr/mirco-esim/tool/cmd"
+
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/jukylin/esim/tool/cmd"
 )
 
 func main() {

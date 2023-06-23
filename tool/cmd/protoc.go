@@ -1,7 +1,8 @@
 package cmd
 
 import (
-	"github.com/jukylin/esim/tool/protoc"
+	"github.com/Hyingerrr/mirco-esim/tool/protoc"
+
 	"github.com/spf13/cobra"
 )
 

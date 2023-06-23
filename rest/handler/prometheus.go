@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jukylin/esim/config"
+	"github.com/Hyingerrr/mirco-esim/config"
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/jukylin/esim/core/meta"
-	"github.com/jukylin/esim/core/metrics"
+	"github.com/Hyingerrr/mirco-esim/core/meta"
+	"github.com/Hyingerrr/mirco-esim/core/metrics"
 )
 
 // request_total.

@@ -4,9 +4,9 @@ import (
 	"strings"
 	"time"
 
-	logx "github.com/jukylin/esim/log"
+	logx "github.com/Hyingerrr/mirco-esim/log"
 
-	"github.com/jukylin/esim/config"
+	"github.com/Hyingerrr/mirco-esim/config"
 )
 
 var (

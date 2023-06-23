@@ -8,7 +8,7 @@ var (
 
 import (
 	"context"
-	"github.com/jukylin/esim/log"
+	"github.com/Hyingerrr/mirco-esim/log"
 	"{{.ProPath}}{{.ServerName}}/internal/domain/user/entity"
 	"{{.ProPath}}{{.ServerName}}/internal/infra/dao"
 )
@@ -59,8 +59,8 @@ func (ur *userRepo) FindByUserName(ctx context.Context, username string) entity.
 import (
 	"os"
 	"testing"
-	"github.com/jukylin/esim/mysql"
-	"github.com/jukylin/esim/config"
+	"github.com/Hyingerrr/mirco-esim/mysql"
+	"github.com/Hyingerrr/mirco-esim/config"
 )
 
 var mysqlClient *mysql.Client

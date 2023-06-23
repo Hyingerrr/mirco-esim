@@ -9,11 +9,11 @@ var (
 import (
 	"sync"
 	"github.com/google/wire"
-	"github.com/jukylin/esim/container"
-	"github.com/jukylin/esim/mysql"
-	"github.com/jukylin/esim/grpc"
-	"github.com/jukylin/esim/pkg/uid"
-	"github.com/jukylin/esim/pkg/validate"
+	"github.com/Hyingerrr/mirco-esim/container"
+	"github.com/Hyingerrr/mirco-esim/mysql"
+	"github.com/Hyingerrr/mirco-esim/grpc"
+	"github.com/Hyingerrr/mirco-esim/pkg/uid"
+	"github.com/Hyingerrr/mirco-esim/pkg/validate"
 	"{{.ProPath}}{{.ServerName}}/internal/infra/repo"
 )
 
@@ -118,8 +118,8 @@ package infra
 
 import (
 	"github.com/google/wire"
-	"github.com/jukylin/esim/grpc"
-	"github.com/jukylin/esim/container"
+	"github.com/Hyingerrr/mirco-esim/grpc"
+	"github.com/Hyingerrr/mirco-esim/container"
 )
 
 
@@ -141,8 +141,8 @@ func initInfra(esim *container.Esim,grpc *grpc.Client) *Infra {
 package infra
 
 import (
-	"github.com/jukylin/esim/container"
-	"github.com/jukylin/esim/grpc"
+	"github.com/Hyingerrr/mirco-esim/container"
+	"github.com/Hyingerrr/mirco-esim/grpc"
 )
 
 // Injectors from wire.go:

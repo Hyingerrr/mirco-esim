@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jukylin/esim/config"
+	"github.com/Hyingerrr/mirco-esim/config"
 
 	"github.com/gomodule/redigo/redis"
 

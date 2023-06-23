@@ -6,8 +6,9 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/Hyingerrr/mirco-esim/core/meta"
+
 	"github.com/gin-gonic/gin"
-	"github.com/jukylin/esim/core/meta"
 )
 
 func MetadataHandler() gin.HandlerFunc {

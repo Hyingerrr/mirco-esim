@@ -3,11 +3,12 @@ package log
 import (
 	"runtime"
 
-	"github.com/jukylin/esim/config"
+	"github.com/Hyingerrr/mirco-esim/config"
 
-	"github.com/jukylin/esim/core/meta"
+	"github.com/Hyingerrr/mirco-esim/core/meta"
 
-	"github.com/jukylin/esim/core/metrics"
+	"github.com/Hyingerrr/mirco-esim/core/metrics"
+
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )

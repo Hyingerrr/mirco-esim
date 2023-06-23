@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/jukylin/esim/pkg/security/pkcs12"
+	"github.com/Hyingerrr/mirco-esim/pkg/security/pkcs12"
 
 	"github.com/pkg/errors"
 )

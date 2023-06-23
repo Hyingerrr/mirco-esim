@@ -5,9 +5,10 @@ import (
 	"os"
 	"testing"
 
+	"github.com/Hyingerrr/mirco-esim/log"
+	"github.com/Hyingerrr/mirco-esim/pkg/templates"
+
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/jukylin/esim/log"
-	"github.com/jukylin/esim/pkg/templates"
 	"github.com/ory/dockertest/v3"
 	dc "github.com/ory/dockertest/v3/docker"
 )

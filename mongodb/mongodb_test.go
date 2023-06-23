@@ -6,8 +6,9 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/jukylin/esim/config"
-	"github.com/jukylin/esim/log"
+	"github.com/Hyingerrr/mirco-esim/config"
+	"github.com/Hyingerrr/mirco-esim/log"
+
 	"github.com/ory/dockertest/v3"
 	dc "github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"

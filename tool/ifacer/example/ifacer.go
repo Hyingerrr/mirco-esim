@@ -3,9 +3,10 @@ package example1
 import (
 	"context"
 
+	aa "github.com/Hyingerrr/mirco-esim/redis"
+	"github.com/Hyingerrr/mirco-esim/tool/ifacer/example/repo"
+
 	"github.com/gomodule/redigo/redis"
-	aa "github.com/jukylin/esim/redis"
-	"github.com/jukylin/esim/tool/ifacer/example/repo"
 )
 
 type TestStruct struct {

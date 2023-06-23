@@ -10,10 +10,10 @@ import (
 	"reflect"
 	"strings"
 	"github.com/hashicorp/go-plugin"
-	"github.com/jukylin/esim/tool/factory"
-	"github.com/jukylin/esim/pkg"
-	"github.com/jukylin/esim/log"
-	"github.com/jukylin/esim/pkg/file-dir"
+	"github.com/Hyingerrr/mirco-esim/tool/factory"
+	"github.com/Hyingerrr/mirco-esim/pkg"
+	"github.com/Hyingerrr/mirco-esim/log"
+	"github.com/Hyingerrr/mirco-esim/pkg/file-dir"
 )
 
 

@@ -10,11 +10,11 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"github.com/jukylin/esim/transports"
+	"github.com/Hyingerrr/mirco-esim/transports"
 	"{{.ProPath}}{{.ServerName}}/internal/infra"
-	"github.com/jukylin/esim/container"
-	"github.com/jukylin/esim/core/xenv"
-	"github.com/jukylin/esim/config"
+	"github.com/Hyingerrr/mirco-esim/container"
+	"github.com/Hyingerrr/mirco-esim/core/xenv"
+	"github.com/Hyingerrr/mirco-esim/config"
 )
 
 type App struct{

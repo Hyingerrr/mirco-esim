@@ -63,7 +63,7 @@ func RegisterGrpcServer(s *grpc.Server, ctl *controllers.Controllers)  {
 import (
 	"strings"
 
-	"github.com/jukylin/esim/grpc"
+	"github.com/Hyingerrr/mirco-esim/grpc"
 	{{.PackageName}} "{{.ProPath}}{{.ServerName}}/internal"
 	"{{.ProPath}}{{.ServerName}}/internal/transports/grpc/routers"
 	"{{.ProPath}}{{.ServerName}}/internal/transports/grpc/controllers"
@@ -98,8 +98,8 @@ import (
 	"context"
 	"testing"
 
-	egrpc "github.com/jukylin/esim/grpc"
-	"github.com/jukylin/esim/log"
+	egrpc "github.com/Hyingerrr/mirco-esim/grpc"
+	"github.com/Hyingerrr/mirco-esim/log"
 	"github.com/stretchr/testify/assert"
 	gp "{{.ProPath}}{{.ServerName}}/internal/infra/third_party/protobuf/passport"
 )
@@ -255,8 +255,8 @@ import (
 	"{{.ProPath}}{{.ServerName}}/internal/transports/grpc"
 	"{{.ProPath}}{{.ServerName}}/internal/infra"
 	_grpc "google.golang.org/grpc"
-	egrpc "github.com/jukylin/esim/grpc"
-	"github.com/jukylin/esim/container"
+	egrpc "github.com/Hyingerrr/mirco-esim/grpc"
+	"github.com/Hyingerrr/mirco-esim/container"
 	{{.PackageName}} "{{.ProPath}}{{.ServerName}}/internal"
 )
 

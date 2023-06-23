@@ -13,8 +13,9 @@ import (
 
 	"fmt"
 
-	"github.com/jukylin/esim/config"
-	"github.com/jukylin/esim/log"
+	"github.com/Hyingerrr/mirco-esim/config"
+	"github.com/Hyingerrr/mirco-esim/log"
+
 	"github.com/prometheus/client_golang/prometheus"
 	io_prometheus_client "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"

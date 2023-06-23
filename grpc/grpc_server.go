@@ -5,7 +5,8 @@ import (
 
 	"google.golang.org/grpc/keepalive"
 
-	logx "github.com/jukylin/esim/log"
+	logx "github.com/Hyingerrr/mirco-esim/log"
+
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"

@@ -1,8 +1,8 @@
 package domainfile
 
 import (
-	"github.com/jukylin/esim/pkg"
-	"github.com/jukylin/esim/pkg/templates"
+	"github.com/Hyingerrr/mirco-esim/pkg"
+	"github.com/Hyingerrr/mirco-esim/pkg/templates"
 )
 
 type entityTpl struct {

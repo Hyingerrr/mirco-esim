@@ -1,9 +1,10 @@
 package cmd
 
 import (
-	filedir "github.com/jukylin/esim/pkg/file-dir"
-	"github.com/jukylin/esim/pkg/templates"
-	"github.com/jukylin/esim/tool/new"
+	filedir "github.com/Hyingerrr/mirco-esim/pkg/file-dir"
+	"github.com/Hyingerrr/mirco-esim/pkg/templates"
+	"github.com/Hyingerrr/mirco-esim/tool/new"
+
 	"github.com/spf13/cobra"
 )
 

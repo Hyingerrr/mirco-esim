@@ -12,7 +12,7 @@ func newLoggerFieldInfo() extendFieldInfo {
 	efi := extendFieldInfo{
 		ftype:      "log.Logger",
 		name:       "logger",
-		importPath: "github.com/jukylin/esim/log",
+		importPath: "github.com/Hyingerrr/mirco-esim/log",
 	}
 
 	return efi
@@ -22,7 +22,7 @@ func newConfigFieldInfo() extendFieldInfo {
 	efi := extendFieldInfo{
 		ftype:      "config.Config",
 		name:       "conf",
-		importPath: "github.com/jukylin/esim/config",
+		importPath: "github.com/Hyingerrr/mirco-esim/config",
 	}
 
 	return efi
