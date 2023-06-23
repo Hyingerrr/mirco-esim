@@ -40,8 +40,6 @@ type Client struct {
 
 type Option func(c *Client)
 
-type ClientOptions struct{}
-
 type DbConfig struct {
 	Db          string `json:"db" yaml:"db"`
 	Dsn         string `json:"dsn" yaml:"dsn"`
@@ -69,19 +67,19 @@ func NewClient(options ...Option) *Client {
 	return onceClient
 }
 
-func (ClientOptions) WithDbConfig(dbConfigs []DbConfig) Option {
+func WithDbConfig(dbConfigs []DbConfig) Option {
 	return func(m *Client) {
 		m.dbConfigs = dbConfigs
 	}
 }
 
-func (ClientOptions) WithStateTicker(stateTicker time.Duration) Option {
+func WithStateTicker(stateTicker time.Duration) Option {
 	return func(m *Client) {
 		m.stateTicker = stateTicker
 	}
 }
 
-func (ClientOptions) WithDB(db *sql.DB) Option {
+func WithDB(db *sql.DB) Option {
 	return func(m *Client) {
 		m.db = db
 	}

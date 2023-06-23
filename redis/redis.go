@@ -57,8 +57,6 @@ type Client struct {
 
 type Option func(c *Client)
 
-type ClientOptions struct{}
-
 func NewClient(options ...Option) *Client {
 	poolOnce.Do(func() {
 		onceClient = &Client{
@@ -136,7 +134,7 @@ func NewClient(options ...Option) *Client {
 	return onceClient
 }
 
-func (ClientOptions) WithStateTicker(stateTicker time.Duration) Option {
+func WithStateTicker(stateTicker time.Duration) Option {
 	return func(r *Client) {
 		r.stateTicker = stateTicker
 	}
